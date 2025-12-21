@@ -1,9 +1,6 @@
 -- Database schema for Blue Moon Apartment Management System (PostgreSQL)
 -- Based on SRS Document v2.0
 
--- Note: Create database manually first:
--- CREATE DATABASE blue_moon WITH ENCODING 'UTF8';
-
 -- Table: users - Quản lý người dùng
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -90,8 +87,8 @@ CREATE TABLE IF NOT EXISTS user_roles (
     UNIQUE (user_id, group_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_id ON user_roles(user_id);
-CREATE INDEX IF NOT EXISTS idx_group_id ON user_roles(group_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_group_id ON user_roles(group_id);
 
 -- Table: group_functions - Nhóm có quyền sử dụng các chức năng
 CREATE TABLE IF NOT EXISTS group_functions (
@@ -104,8 +101,8 @@ CREATE TABLE IF NOT EXISTS group_functions (
     UNIQUE (group_id, function_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_group_id ON group_functions(group_id);
-CREATE INDEX IF NOT EXISTS idx_function_id ON group_functions(function_id);
+CREATE INDEX IF NOT EXISTS idx_group_functions_group_id ON group_functions(group_id);
+CREATE INDEX IF NOT EXISTS idx_group_functions_function_id ON group_functions(function_id);
 
 -- Table: menus - Menu động
 CREATE TABLE IF NOT EXISTS menus (
@@ -138,9 +135,9 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_token ON password_reset_tokens(token);
-CREATE INDEX IF NOT EXISTS idx_user_id ON password_reset_tokens(user_id);
-CREATE INDEX IF NOT EXISTS idx_expires_at ON password_reset_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
 
 -- Table: sessions - Quản lý phiên đăng nhập
 CREATE TABLE IF NOT EXISTS sessions (
@@ -152,7 +149,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_session_token ON sessions(session_token);
-CREATE INDEX IF NOT EXISTS idx_user_id ON sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_expires_at ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_session_token ON sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
