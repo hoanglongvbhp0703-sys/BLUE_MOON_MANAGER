@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.bluemoon.ui.main.MainController">
+   <top>
+      <MenuBar>
+         <menus>
+            <Menu text="Hệ thống">
+               <items>
+                  <MenuItem text="Quản lý người dùng" onAction="#handleUserManagement" />
+                  <MenuItem text="Quản lý chức năng" onAction="#handleFunctionManagement" />
+                  <MenuItem text="Tạo menu" onAction="#handleMenuManagement" />
+                  <SeparatorMenuItem />
+                  <MenuItem text="Đăng xuất" onAction="#handleLogout" />
+               </items>
+            </Menu>
+            <Menu text="Nhân khẩu">
+               <items>
+                  <MenuItem text="Quản lý nhân khẩu" />
+               </items>
+            </Menu>
+            <Menu text="Thu phí">
+               <items>
+                  <MenuItem text="Quản lý thu phí" />
+               </items>
+            </Menu>
+         </menus>
+      </MenuBar>
+   </top>
+   <center>
+      <Label text="Chào mừng đến với hệ thống quản lý chung cư Blue Moon" style="-fx-font-size: 18px;" alignment="CENTER">
+         <font>
+            <Font name="Arial" size="18.0" />
+         </font>
+      </Label>
+   </center>
+</BorderPane>
+
