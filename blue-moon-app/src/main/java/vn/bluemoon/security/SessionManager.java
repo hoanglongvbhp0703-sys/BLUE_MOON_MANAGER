@@ -73,6 +73,31 @@ public class SessionManager {
     public boolean isValidSession(String token) {
         return getUser(token) != null;
     }
+    
+    /**
+     * Clear all sessions (logout)
+     */
+    public void clearSession() {
+        sessions.clear();
+        sessionTimestamps.clear();
+    }
+    
+    /**
+     * Get current user from any active session
+     * @return Current user if any session exists, null otherwise
+     */
+    public User getCurrentUser() {
+        if (sessions.isEmpty()) {
+            return null;
+        }
+        // Return first valid user from sessions
+        for (Map.Entry<String, User> entry : sessions.entrySet()) {
+            if (isValidSession(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
 }
 
 

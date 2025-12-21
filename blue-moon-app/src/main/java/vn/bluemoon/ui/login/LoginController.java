@@ -122,6 +122,13 @@ public class LoginController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/main/MainView.fxml"));
             Parent root = loader.load();
+            
+            // Set main stage cho MainController
+            vn.bluemoon.ui.main.MainController mainController = loader.getController();
+            if (mainController != null && stage != null) {
+                mainController.setMainStage(stage);
+            }
+            
             Scene scene = new Scene(root, 1200, 800);
             if (stage != null) {
                 stage.setTitle("Blue Moon - Hệ thống quản lý chung cư");

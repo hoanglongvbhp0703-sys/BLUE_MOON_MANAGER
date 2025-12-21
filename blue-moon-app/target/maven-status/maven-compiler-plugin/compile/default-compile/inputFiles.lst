@@ -19,16 +19,20 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\PasswordRe
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\PasswordHasher.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\register\RegisterController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Role.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Resident.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\TokenRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\UserRepository.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\ResidentService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\TokenGenerator.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\user\UserManagementController.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\fee\FeeCollectionController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Menu.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\function\FunctionManagementController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\MenuService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\MenuRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\ErrorDialog.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\controller\MenuController.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\resident\ResidentManagementController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Group.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\RoleRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\EmailSender.java
@@ -36,6 +40,8 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\FunctionSe
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\RegisterRequest.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\App.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\exception\AuthException.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\ResidentRepository.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\FeeCollection.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\LoginRequest.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\config\AppConfig.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\FunctionUpsertRequest.java
@@ -49,4 +55,6 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\DatabaseIniti
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\FunctionGroupRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\function\FunctionDialogController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\exception\DbException.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\FeeCollectionService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\UserSearchRequest.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\FeeCollectionRepository.java

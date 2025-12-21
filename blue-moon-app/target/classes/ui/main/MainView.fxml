@@ -20,12 +20,12 @@
             </Menu>
             <Menu text="Nhân khẩu">
                <items>
-                  <MenuItem text="Quản lý nhân khẩu" />
+                  <MenuItem text="Quản lý nhân khẩu" onAction="#handleResidentManagement" />
                </items>
             </Menu>
             <Menu text="Thu phí">
                <items>
-                  <MenuItem text="Quản lý thu phí" />
+                  <MenuItem text="Quản lý thu phí" onAction="#handleFeeCollection" />
                </items>
             </Menu>
          </menus>
