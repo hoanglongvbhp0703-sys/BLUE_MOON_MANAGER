@@ -8,6 +8,7 @@ vn\bluemoon\model\entity\FunctionGroup.class
 vn\bluemoon\util\TokenGenerator.class
 vn\bluemoon\repository\FunctionGroupRepository.class
 vn\bluemoon\App.class
+vn\bluemoon\util\DatabaseInitializer.class
 vn\bluemoon\ui\register\RegisterController.class
 vn\bluemoon\util\JdbcUtils.class
 vn\bluemoon\model\dto\UserSearchRequest.class

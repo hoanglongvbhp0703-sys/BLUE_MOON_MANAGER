@@ -10,11 +10,9 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import vn.bluemoon.exception.DbException;
-import vn.bluemoon.model.dto.FunctionUpsertRequest;
 import vn.bluemoon.model.entity.Function;
 import vn.bluemoon.service.FunctionService;
 import vn.bluemoon.util.ErrorDialog;
-import vn.bluemoon.validation.ValidationException;
 
 import java.io.IOException;
 import java.util.List;

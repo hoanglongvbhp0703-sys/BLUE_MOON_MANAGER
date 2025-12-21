@@ -45,6 +45,7 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\controller\Functio
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\main\MainController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Function.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\FunctionRepository.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\DatabaseInitializer.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\FunctionGroupRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\function\FunctionDialogController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\exception\DbException.java
