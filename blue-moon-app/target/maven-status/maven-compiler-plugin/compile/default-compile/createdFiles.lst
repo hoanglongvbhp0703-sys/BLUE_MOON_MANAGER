@@ -14,6 +14,7 @@ vn\bluemoon\ui\register\RegisterController.class
 vn\bluemoon\repository\ResidentRepository.class
 vn\bluemoon\util\JdbcUtils.class
 vn\bluemoon\model\dto\UserSearchRequest.class
+vn\bluemoon\service\PersonalInfoService.class
 vn\bluemoon\ui\function\FunctionDialogController.class
 vn\bluemoon\model\entity\Menu.class
 vn\bluemoon\util\AppLogger.class
@@ -38,6 +39,7 @@ vn\bluemoon\model\dto\LoginRequest.class
 vn\bluemoon\security\SessionManager.class
 vn\bluemoon\repository\FunctionRepository.class
 vn\bluemoon\repository\MenuRepository.class
+vn\bluemoon\ui\personal\PersonalInfoController.class
 vn\bluemoon\ui\main\MainController.class
 vn\bluemoon\service\MenuService.class
 vn\bluemoon\model\entity\User.class
@@ -47,6 +49,7 @@ vn\bluemoon\util\PasswordHasher.class
 vn\bluemoon\model\entity\Function.class
 vn\bluemoon\ui\user\UserManagementController.class
 vn\bluemoon\ui\fee\FeeCollectionController$PaymentInfo.class
+vn\bluemoon\model\dto\PersonalInfoRequest.class
 vn\bluemoon\ui\function\FunctionDialogController$2.class
 vn\bluemoon\model\entity\Group.class
 vn\bluemoon\service\RoleGroupService.class

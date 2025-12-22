@@ -5,67 +5,45 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.bluemoon.ui.login.LoginController">
+<AnchorPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.bluemoon.ui.login.LoginController" stylesheets="/css/styles.css">
    <children>
-      <VBox alignment="CENTER" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <VBox alignment="CENTER" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" styleClass="login-container">
          <padding>
             <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
          </padding>
          <children>
-            <Label text="Blue Moon" style="-fx-font-size: 32px; -fx-font-weight: bold;">
-               <font>
-                  <Font name="Arial" size="32.0" />
-               </font>
-            </Label>
-            <Label text="Hệ thống quản lý chung cư" style="-fx-font-size: 18px;">
-               <font>
-                  <Font name="Arial" size="18.0" />
-               </font>
-            </Label>
-            
-            <VBox spacing="15.0" style="-fx-padding: 30px; -fx-background-color: #f5f5f5; -fx-background-radius: 10px;">
-               <Label text="Đăng nhập" style="-fx-font-size: 20px; -fx-font-weight: bold;">
+            <VBox alignment="CENTER" spacing="10.0">
+               <Label text="🌙 Blue Moon" style="-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3);">
                   <font>
-                     <Font name="Arial" size="20.0" />
+                     <Font name="Arial" size="42.0" />
+                  </font>
+               </Label>
+               <Label text="Hệ thống quản lý chung cư" style="-fx-font-size: 18px; -fx-text-fill: white; -fx-opacity: 0.95;">
+                  <font>
+                     <Font name="Arial" size="18.0" />
+                  </font>
+               </Label>
+            </VBox>
+            
+            <VBox spacing="20.0" styleClass="login-card">
+               <Label text="Đăng nhập" styleClass="label-subtitle" style="-fx-font-size: 24px; -fx-text-fill: #2c3e50; -fx-padding: 0px 0px 10px 0px;">
+                  <font>
+                     <Font name="Arial" size="24.0" />
                   </font>
                </Label>
                
-               <TextField fx:id="usernameField" promptText="Tên đăng nhập" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </TextField>
+               <TextField fx:id="usernameField" promptText="Tên đăng nhập" />
                
-               <PasswordField fx:id="passwordField" promptText="Mật khẩu" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </PasswordField>
+               <PasswordField fx:id="passwordField" promptText="Mật khẩu" />
                
-               <HBox spacing="10.0">
-                  <Button fx:id="loginButton" text="Đăng nhập" onAction="#handleLogin" style="-fx-font-size: 14px; -fx-pref-width: 120px;">
-                     <font>
-                        <Font name="Arial" size="14.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="registerButton" text="Đăng ký" onAction="#handleRegister" style="-fx-font-size: 14px; -fx-pref-width: 120px;">
-                     <font>
-                        <Font name="Arial" size="14.0" />
-                     </font>
-                  </Button>
+               <HBox spacing="10.0" alignment="CENTER">
+                  <Button fx:id="loginButton" text="Đăng nhập" onAction="#handleLogin" styleClass="button-primary" style="-fx-pref-width: 140px;" />
+                  <Button fx:id="registerButton" text="Đăng ký" onAction="#handleRegister" styleClass="button-secondary" style="-fx-pref-width: 140px;" />
                </HBox>
                
-               <Hyperlink fx:id="forgotPasswordLink" text="Quên mật khẩu?" onAction="#handleForgotPassword" style="-fx-font-size: 12px;">
-                  <font>
-                     <Font name="Arial" size="12.0" />
-                  </font>
-               </Hyperlink>
+               <Hyperlink fx:id="forgotPasswordLink" text="Quên mật khẩu?" onAction="#handleForgotPassword" styleClass="hyperlink" />
                
-               <Label fx:id="errorLabel" text="" style="-fx-text-fill: red; -fx-font-size: 12px;" visible="false">
-                  <font>
-                     <Font name="Arial" size="12.0" />
-                  </font>
-               </Label>
+               <Label fx:id="errorLabel" text="" styleClass="label-error" visible="false" alignment="CENTER" />
             </VBox>
          </children>
       </VBox>

@@ -4,7 +4,15 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import vn.bluemoon.exception.DbException;
+import vn.bluemoon.model.entity.User;
+import vn.bluemoon.security.Authorization;
 import vn.bluemoon.security.SessionManager;
 import vn.bluemoon.util.ErrorDialog;
 
@@ -18,8 +26,182 @@ public class MainController {
     private Stage mainStage;
     
     @FXML
+    private MenuBar menuBar;
+    
+    @FXML
+    private Menu systemMenu;
+    
+    @FXML
+    private MenuItem userManagementMenuItem;
+    
+    @FXML
+    private MenuItem functionManagementMenuItem;
+    
+    @FXML
+    private MenuItem menuManagementMenuItem;
+    
+    @FXML
+    private Menu residentMenu;
+    
+    @FXML
+    private MenuItem residentManagementMenuItem;
+    
+    @FXML
+    private Menu feeMenu;
+    
+    @FXML
+    private MenuItem feeCollectionMenuItem;
+    
+    @FXML
+    private Menu personalMenu;
+    
+    @FXML
+    private MenuItem personalInfoMenuItem;
+    
+    @FXML
+    private GridPane functionGridPane;
+    
+    @FXML
+    public void initialize() {
+        // Kiểm tra quyền và ẩn/hiện menu items
+        checkPermissions();
+        // Kiểm tra quyền và ẩn/hiện function cards
+        checkFunctionCards();
+    }
+    
+    /**
+     * Kiểm tra quyền và ẩn/hiện menu items
+     */
+    private void checkPermissions() {
+        try {
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                // Nếu không có user, ẩn tất cả menu trừ đăng xuất
+                hideAllMenus();
+                return;
+            }
+            
+            // Kiểm tra quyền cho từng chức năng
+            boolean hasUserManagement = Authorization.hasAccess(currentUser, "UserManagementForm");
+            boolean hasFunctionManagement = Authorization.hasAccess(currentUser, "FunctionManagementForm");
+            boolean hasMenuManagement = Authorization.hasAccess(currentUser, "MenuForm");
+            boolean hasResidentManagement = Authorization.hasAccess(currentUser, "ResidentManagementView");
+            boolean hasFeeCollection = Authorization.hasAccess(currentUser, "FeeCollectionView");
+            
+            // Ẩn/hiện menu items
+            userManagementMenuItem.setVisible(hasUserManagement);
+            functionManagementMenuItem.setVisible(hasFunctionManagement);
+            menuManagementMenuItem.setVisible(hasMenuManagement);
+            residentManagementMenuItem.setVisible(hasResidentManagement);
+            feeCollectionMenuItem.setVisible(hasFeeCollection);
+            
+            // Ẩn menu nếu không có item nào hiển thị
+            // Menu "Hệ thống" luôn hiển thị vì có "Đăng xuất"
+            if (!hasResidentManagement) {
+                residentMenu.setVisible(false);
+            }
+            if (!hasFeeCollection) {
+                feeMenu.setVisible(false);
+            }
+            
+            // Menu "Cá nhân" hiển thị cho tất cả user đã đăng nhập (không phải admin)
+            // Admin cũng có thể dùng nhưng thường dùng quản lý nhân khẩu
+            personalMenu.setVisible(true);
+            personalInfoMenuItem.setVisible(true);
+            
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
+        }
+    }
+    
+    private void hideAllMenus() {
+        systemMenu.setVisible(false);
+        residentMenu.setVisible(false);
+        feeMenu.setVisible(false);
+    }
+    
+    /**
+     * Kiểm tra quyền và ẩn/hiện function cards
+     */
+    private void checkFunctionCards() {
+        try {
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                // Ẩn tất cả cards nếu chưa đăng nhập
+                if (functionGridPane != null) {
+                    functionGridPane.getChildren().forEach(node -> {
+                        if (node instanceof VBox) {
+                            node.setVisible(false);
+                        }
+                    });
+                }
+                return;
+            }
+            
+            // Kiểm tra quyền cho từng chức năng
+            boolean hasUserManagement = Authorization.hasAccess(currentUser, "UserManagementForm");
+            boolean hasFunctionManagement = Authorization.hasAccess(currentUser, "FunctionManagementForm");
+            boolean hasMenuManagement = Authorization.hasAccess(currentUser, "MenuForm");
+            boolean hasResidentManagement = Authorization.hasAccess(currentUser, "ResidentManagementView");
+            boolean hasFeeCollection = Authorization.hasAccess(currentUser, "FeeCollectionView");
+            
+            // Menu "Cá nhân" hiển thị cho tất cả user đã đăng nhập (trừ admin)
+            boolean hasPersonalInfo = !Authorization.hasRole(currentUser, "Quản trị viên");
+            
+            // Ẩn/hiện các cards dựa trên quyền
+            if (functionGridPane != null) {
+                // Tìm các VBox trong GridPane theo vị trí
+                for (javafx.scene.Node node : functionGridPane.getChildren()) {
+                    if (node instanceof VBox) {
+                        Integer colIndex = GridPane.getColumnIndex(node);
+                        Integer rowIndex = GridPane.getRowIndex(node);
+                        
+                        if (colIndex == null) colIndex = 0;
+                        if (rowIndex == null) rowIndex = 0;
+                        
+                        // Card 0,0: Quản lý người dùng
+                        if (colIndex == 0 && rowIndex == 0) {
+                            node.setVisible(hasUserManagement);
+                        }
+                        // Card 1,0: Quản lý nhân khẩu
+                        else if (colIndex == 1 && rowIndex == 0) {
+                            node.setVisible(hasResidentManagement);
+                        }
+                        // Card 2,0: Quản lý thu phí
+                        else if (colIndex == 2 && rowIndex == 0) {
+                            node.setVisible(hasFeeCollection);
+                        }
+                        // Card 0,1: Quản lý chức năng
+                        else if (colIndex == 0 && rowIndex == 1) {
+                            node.setVisible(hasFunctionManagement);
+                        }
+                        // Card 1,1: Thông tin cá nhân
+                        else if (colIndex == 1 && rowIndex == 1) {
+                            node.setVisible(hasPersonalInfo);
+                        }
+                        // Card 2,1: Tạo menu
+                        else if (colIndex == 2 && rowIndex == 1) {
+                            node.setVisible(hasMenuManagement);
+                        }
+                    }
+                }
+            }
+            
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
+        }
+    }
+    
+    @FXML
     private void handleUserManagement() {
         try {
+            // Kiểm tra quyền
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (!Authorization.hasAccess(currentUser, "UserManagementForm")) {
+                ErrorDialog.showError("Lỗi", "Bạn không có quyền truy cập chức năng này");
+                return;
+            }
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/user/UserManagementView.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 1000, 700);
@@ -27,6 +209,8 @@ public class MainController {
             stage.setTitle("Quản lý người dùng");
             stage.setScene(scene);
             stage.show();
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
         } catch (IOException e) {
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình quản lý người dùng: " + e.getMessage());
         }
@@ -35,6 +219,13 @@ public class MainController {
     @FXML
     private void handleFunctionManagement() {
         try {
+            // Kiểm tra quyền - chỉ Quản trị viên
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (!Authorization.hasAccess(currentUser, "FunctionManagementForm")) {
+                ErrorDialog.showError("Lỗi", "Bạn không có quyền truy cập chức năng này. Chỉ Quản trị viên mới có quyền.");
+                return;
+            }
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/function/FunctionManagementView.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 900, 600);
@@ -42,6 +233,8 @@ public class MainController {
             stage.setTitle("Quản lý chức năng");
             stage.setScene(scene);
             stage.show();
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
         } catch (IOException e) {
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình quản lý chức năng: " + e.getMessage());
         }
@@ -49,27 +242,61 @@ public class MainController {
     
     @FXML
     private void handleMenuManagement() {
-        ErrorDialog.showInfo("Thông tin", "Chức năng tạo menu đang được phát triển");
+        try {
+            // Kiểm tra quyền - chỉ Quản trị viên
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (!Authorization.hasAccess(currentUser, "MenuForm")) {
+                ErrorDialog.showError("Lỗi", "Bạn không có quyền truy cập chức năng này. Chỉ Quản trị viên mới có quyền.");
+                return;
+            }
+            
+            ErrorDialog.showInfo("Thông tin", "Chức năng tạo menu đang được phát triển");
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
+        }
     }
     
     @FXML
     private void handleResidentManagement() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/resident/ResidentManagementView.fxml"));
+            // Kiểm tra quyền
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (!Authorization.hasAccess(currentUser, "ResidentManagementView")) {
+                ErrorDialog.showError("Lỗi", "Bạn không có quyền truy cập chức năng này");
+                return;
+            }
+            
+            java.net.URL resource = getClass().getResource("/ui/resident/ResidentManagementView.fxml");
+            if (resource == null) {
+                ErrorDialog.showError("Lỗi", "Không tìm thấy file FXML: /ui/resident/ResidentManagementView.fxml\nVui lòng rebuild project.");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(resource);
             Parent root = loader.load();
             Scene scene = new Scene(root, 1400, 800);
             Stage stage = new Stage();
             stage.setTitle("Quản lý nhân khẩu");
             stage.setScene(scene);
             stage.show();
-        } catch (IOException e) {
-            ErrorDialog.showError("Lỗi", "Không thể mở màn hình quản lý nhân khẩu: " + e.getMessage());
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", "Không thể mở màn hình quản lý nhân khẩu: " + e.getMessage() + "\n" + e.getClass().getName());
         }
     }
     
     @FXML
     private void handleFeeCollection() {
         try {
+            // Kiểm tra quyền
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (!Authorization.hasAccess(currentUser, "FeeCollectionView")) {
+                ErrorDialog.showError("Lỗi", "Bạn không có quyền truy cập chức năng này");
+                return;
+            }
+            
             java.net.URL resource = getClass().getResource("/ui/fee/FeeCollectionView.fxml");
             if (resource == null) {
                 ErrorDialog.showError("Lỗi", "Không tìm thấy file FXML: /ui/fee/FeeCollectionView.fxml");
@@ -82,9 +309,42 @@ public class MainController {
             stage.setTitle("Quản lý thu phí");
             stage.setScene(scene);
             stage.show();
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình quản lý thu phí: " + e.getMessage() + "\n" + e.getClass().getName());
+        }
+    }
+    
+    @FXML
+    private void handlePersonalInfo() {
+        try {
+            // Kiểm tra user đã đăng nhập
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                ErrorDialog.showError("Lỗi", "Bạn chưa đăng nhập");
+                return;
+            }
+            
+            // Kiểm tra nếu là admin thì không cho dùng (admin dùng quản lý nhân khẩu)
+            if (Authorization.hasRole(currentUser, "Quản trị viên")) {
+                ErrorDialog.showInfo("Thông tin", "Quản trị viên vui lòng sử dụng chức năng 'Quản lý nhân khẩu' để quản lý thông tin");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/personal/PersonalInfoView.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root, 700, 800);
+            Stage stage = new Stage();
+            stage.setTitle("Thông tin cá nhân");
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.show();
+        } catch (IOException e) {
+            ErrorDialog.showError("Lỗi", "Không thể mở màn hình thông tin cá nhân: " + e.getMessage());
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi: " + e.getMessage());
         }
     }
     

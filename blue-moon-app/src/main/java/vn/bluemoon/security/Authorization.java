@@ -26,6 +26,11 @@ public class Authorization {
             return false;
         }
 
+        // Quản trị viên có toàn quyền
+        if (hasRole(user, "Quản trị viên")) {
+            return true;
+        }
+
         // Get all groups for the user
         List<Group> groups = groupRepository.findByUserId(user.getId());
         

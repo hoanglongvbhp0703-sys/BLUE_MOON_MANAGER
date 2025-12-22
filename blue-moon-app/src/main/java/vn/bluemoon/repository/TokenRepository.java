@@ -5,7 +5,6 @@ import vn.bluemoon.model.entity.PasswordResetToken;
 import vn.bluemoon.util.JdbcUtils;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 
 /**
  * Repository for PasswordResetToken entity

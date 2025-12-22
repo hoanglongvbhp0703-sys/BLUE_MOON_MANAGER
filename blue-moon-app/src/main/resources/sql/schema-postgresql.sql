@@ -1,5 +1,10 @@
 -- Database schema for Blue Moon Apartment Management System (PostgreSQL)
 -- Based on SRS Document v2.0
+-- This file contains all table structures, indexes, triggers, and functions
+
+-- ============================================
+-- CORE TABLES - Quản lý người dùng và phân quyền
+-- ============================================
 
 -- Table: users - Quản lý người dùng
 CREATE TABLE IF NOT EXISTS users (
@@ -21,19 +26,6 @@ CREATE INDEX IF NOT EXISTS idx_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_facebook_id ON users(facebook_id);
 
--- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Trigger for users table
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- Table: function_groups - Nhóm chức năng
 CREATE TABLE IF NOT EXISTS function_groups (
     id SERIAL PRIMARY KEY,
@@ -42,9 +34,6 @@ CREATE TABLE IF NOT EXISTS function_groups (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TRIGGER update_function_groups_updated_at BEFORE UPDATE ON function_groups
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Table: functions - Chức năng
 CREATE TABLE IF NOT EXISTS functions (
@@ -61,9 +50,6 @@ CREATE TABLE IF NOT EXISTS functions (
 CREATE INDEX IF NOT EXISTS idx_name ON functions(name);
 CREATE INDEX IF NOT EXISTS idx_boundary_class ON functions(boundary_class);
 
-CREATE TRIGGER update_functions_updated_at BEFORE UPDATE ON functions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- Table: groups - Nhóm người dùng (roles)
 CREATE TABLE IF NOT EXISTS groups (
     id SERIAL PRIMARY KEY,
@@ -72,9 +58,6 @@ CREATE TABLE IF NOT EXISTS groups (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TRIGGER update_groups_updated_at BEFORE UPDATE ON groups
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Table: user_roles - Người dùng có nhiều vai trò
 CREATE TABLE IF NOT EXISTS user_roles (
@@ -121,9 +104,6 @@ CREATE TABLE IF NOT EXISTS menus (
 CREATE INDEX IF NOT EXISTS idx_parent_id ON menus(parent_id);
 CREATE INDEX IF NOT EXISTS idx_display_order ON menus(display_order);
 
-CREATE TRIGGER update_menus_updated_at BEFORE UPDATE ON menus
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- Table: password_reset_tokens - Token đặt lại mật khẩu
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id SERIAL PRIMARY KEY,
@@ -153,3 +133,176 @@ CREATE INDEX IF NOT EXISTS idx_sessions_session_token ON sessions(session_token)
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
+-- ============================================
+-- HOUSEHOLD MANAGEMENT TABLES - Quản lý hộ dân
+-- ============================================
+
+-- Table: apartments - Quản lý căn hộ
+CREATE TABLE IF NOT EXISTS apartments (
+    id SERIAL PRIMARY KEY,
+    building_number VARCHAR(10) NOT NULL,
+    floor_number INT NOT NULL,
+    room_number VARCHAR(10) NOT NULL,
+    apartment_code VARCHAR(50) UNIQUE NOT NULL,
+    area DECIMAL(10, 2) NOT NULL,
+    number_of_rooms INT DEFAULT 2,
+    status VARCHAR(20) DEFAULT 'available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_apartments_code ON apartments(apartment_code);
+CREATE INDEX IF NOT EXISTS idx_apartments_building ON apartments(building_number, floor_number);
+CREATE INDEX IF NOT EXISTS idx_apartments_status ON apartments(status);
+
+-- Table: households - Quản lý hộ dân
+CREATE TABLE IF NOT EXISTS households (
+    id SERIAL PRIMARY KEY,
+    apartment_id INT NOT NULL,
+    household_code VARCHAR(50) UNIQUE NOT NULL,
+    owner_name VARCHAR(255) NOT NULL,
+    owner_id_card VARCHAR(20),
+    owner_phone VARCHAR(20),
+    owner_email VARCHAR(255),
+    number_of_members INT DEFAULT 1,
+    registration_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'active',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (apartment_id) REFERENCES apartments(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_households_apartment_id ON households(apartment_id);
+CREATE INDEX IF NOT EXISTS idx_households_code ON households(household_code);
+CREATE INDEX IF NOT EXISTS idx_households_owner_name ON households(owner_name);
+CREATE INDEX IF NOT EXISTS idx_households_status ON households(status);
+
+-- Table: residents - Quản lý nhân khẩu
+-- Lưu ý: user_id liên kết với users để user có thể đăng ký/cập nhật thông tin cá nhân
+CREATE TABLE IF NOT EXISTS residents (
+    id SERIAL PRIMARY KEY,
+    household_id INT NOT NULL,
+    user_id INT NULL,  -- Liên kết với users (nullable vì có thể có residents không phải user)
+    full_name VARCHAR(255) NOT NULL,
+    id_card VARCHAR(20),
+    date_of_birth DATE,
+    gender VARCHAR(10),
+    relationship VARCHAR(50),
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    occupation VARCHAR(255),
+    permanent_address TEXT,
+    temporary_address TEXT,
+    status VARCHAR(20) DEFAULT 'active',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE (user_id)  -- Một user chỉ có thể có một resident record
+);
+
+CREATE INDEX IF NOT EXISTS idx_residents_household_id ON residents(household_id);
+CREATE INDEX IF NOT EXISTS idx_residents_user_id ON residents(user_id);
+CREATE INDEX IF NOT EXISTS idx_residents_name ON residents(full_name);
+CREATE INDEX IF NOT EXISTS idx_residents_id_card ON residents(id_card);
+CREATE INDEX IF NOT EXISTS idx_residents_status ON residents(status);
+
+-- ============================================
+-- FEE COLLECTION TABLES - Quản lý thu phí
+-- ============================================
+
+-- Table: fee_collections - Quản lý thu phí
+CREATE TABLE IF NOT EXISTS fee_collections (
+    id SERIAL PRIMARY KEY,
+    household_id INT NOT NULL,
+    month INT NOT NULL CHECK (month >= 1 AND month <= 12),
+    year INT NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'unpaid', -- unpaid, paid
+    payment_date DATE,
+    payment_method VARCHAR(50), -- cash, bank_transfer, credit_card
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
+    UNIQUE (household_id, month, year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fee_collections_household_id ON fee_collections(household_id);
+CREATE INDEX IF NOT EXISTS idx_fee_collections_month_year ON fee_collections(year, month);
+CREATE INDEX IF NOT EXISTS idx_fee_collections_status ON fee_collections(status);
+
+-- Table: fee_types - Loại phí (phí quản lý, phí dịch vụ, v.v.)
+CREATE TABLE IF NOT EXISTS fee_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    default_amount DECIMAL(15, 2) DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fee_types_name ON fee_types(name);
+CREATE INDEX IF NOT EXISTS idx_fee_types_active ON fee_types(is_active);
+
+-- Table: fee_collection_details - Chi tiết các loại phí trong một lần thu
+CREATE TABLE IF NOT EXISTS fee_collection_details (
+    id SERIAL PRIMARY KEY,
+    fee_collection_id INT NOT NULL,
+    fee_type_id INT NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fee_collection_id) REFERENCES fee_collections(id) ON DELETE CASCADE,
+    FOREIGN KEY (fee_type_id) REFERENCES fee_types(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_fee_collection_details_fee_collection_id ON fee_collection_details(fee_collection_id);
+CREATE INDEX IF NOT EXISTS idx_fee_collection_details_fee_type_id ON fee_collection_details(fee_type_id);
+
+-- ============================================
+-- TRIGGERS AND FUNCTIONS
+-- ============================================
+
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Triggers for all tables with updated_at column
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_function_groups_updated_at BEFORE UPDATE ON function_groups
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_functions_updated_at BEFORE UPDATE ON functions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_groups_updated_at BEFORE UPDATE ON groups
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_menus_updated_at BEFORE UPDATE ON menus
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_apartments_updated_at BEFORE UPDATE ON apartments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_households_updated_at BEFORE UPDATE ON households
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_residents_updated_at BEFORE UPDATE ON residents
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_fee_collections_updated_at BEFORE UPDATE ON fee_collections
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_fee_types_updated_at BEFORE UPDATE ON fee_types
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

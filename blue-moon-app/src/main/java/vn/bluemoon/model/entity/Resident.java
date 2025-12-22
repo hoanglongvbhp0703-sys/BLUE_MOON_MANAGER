@@ -8,6 +8,7 @@ import java.time.LocalDate;
 public class Resident {
     private Integer id;
     private Integer householdId;
+    private Integer userId;  // Liên kết với users
     private String fullName;
     private String idCard;
     private LocalDate dateOfBirth;
@@ -42,6 +43,14 @@ public class Resident {
 
     public void setHouseholdId(Integer householdId) {
         this.householdId = householdId;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getFullName() {
@@ -199,4 +208,5 @@ public class Resident {
         }
     }
 }
+
 

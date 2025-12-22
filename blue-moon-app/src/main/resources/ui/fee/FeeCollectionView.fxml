@@ -5,53 +5,33 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.bluemoon.ui.fee.FeeCollectionController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.bluemoon.ui.fee.FeeCollectionController" stylesheets="/css/styles.css">
    <top>
-      <VBox spacing="10.0">
+      <VBox spacing="15.0" styleClass="card" style="-fx-margin: 10px;">
          <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
          </padding>
          <children>
-            <Label text="Quản lý thu phí" style="-fx-font-size: 18px; -fx-font-weight: bold;">
+            <Label text="Quản lý thu phí" styleClass="label-subtitle">
                <font>
-                  <Font name="Arial" size="18.0" />
+                  <Font name="Arial" size="20.0" />
                </font>
             </Label>
-            <HBox spacing="10.0">
-               <TextField fx:id="searchApartmentCodeField" promptText="Mã căn hộ" prefWidth="120.0" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </TextField>
-               <TextField fx:id="searchHouseholdCodeField" promptText="Mã hộ dân" prefWidth="120.0" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </TextField>
-               <TextField fx:id="searchOwnerNameField" promptText="Tên chủ hộ" prefWidth="150.0" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </TextField>
-               <ComboBox fx:id="searchMonthCombo" promptText="Tháng" prefWidth="80.0" style="-fx-font-size: 14px;" />
-               <ComboBox fx:id="searchYearCombo" promptText="Năm" prefWidth="80.0" style="-fx-font-size: 14px;" />
-               <ComboBox fx:id="searchStatusCombo" promptText="Trạng thái" prefWidth="120.0" style="-fx-font-size: 14px;" />
-               <Button fx:id="searchButton" text="Tìm kiếm" onAction="#handleSearch" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </Button>
-               <Button fx:id="refreshButton" text="Làm mới" onAction="#handleRefresh" style="-fx-font-size: 14px;">
-                  <font>
-                     <Font name="Arial" size="14.0" />
-                  </font>
-               </Button>
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+               <TextField fx:id="searchApartmentCodeField" promptText="Mã căn hộ" prefWidth="120.0" />
+               <TextField fx:id="searchHouseholdCodeField" promptText="Mã hộ dân" prefWidth="120.0" />
+               <TextField fx:id="searchOwnerNameField" promptText="Tên chủ hộ" prefWidth="150.0" />
+               <ComboBox fx:id="searchMonthCombo" promptText="Tháng" prefWidth="80.0" />
+               <ComboBox fx:id="searchYearCombo" promptText="Năm" prefWidth="80.0" />
+               <ComboBox fx:id="searchStatusCombo" promptText="Trạng thái" prefWidth="120.0" />
+               <Button fx:id="searchButton" text="🔍 Tìm kiếm" onAction="#handleSearch" styleClass="button-primary" />
+               <Button fx:id="refreshButton" text="🔄 Làm mới" onAction="#handleRefresh" styleClass="button-secondary" />
             </HBox>
          </children>
       </VBox>
    </top>
    <center>
-      <TableView fx:id="feeTable" style="-fx-font-size: 14px;">
+      <TableView fx:id="feeTable" styleClass="table-view">
          <columns>
             <TableColumn fx:id="sttColumn" text="STT" prefWidth="50.0" />
             <TableColumn fx:id="apartmentCodeColumn" text="Mã căn hộ" prefWidth="120.0" />
@@ -65,31 +45,28 @@
       </TableView>
    </center>
    <bottom>
-      <HBox spacing="20.0" alignment="CENTER">
+      <HBox spacing="20.0" alignment="CENTER_LEFT" styleClass="card">
          <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
          </padding>
          <children>
-            <Label fx:id="totalLabel" text="Tổng số: 0" style="-fx-font-size: 14px; -fx-font-weight: bold;">
+            <Label fx:id="totalLabel" text="Tổng số: 0" styleClass="label-section" style="-fx-font-size: 16px; -fx-text-fill: #2c3e50;">
                <font>
-                  <Font name="Arial" size="14.0" />
+                  <Font name="Arial" size="16.0" />
                </font>
             </Label>
-            <Label fx:id="paidLabel" text="Đã thu: 0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: green;">
+            <Label fx:id="paidLabel" text="Đã thu: 0" styleClass="label-success" style="-fx-font-size: 16px; -fx-font-weight: bold;">
                <font>
-                  <Font name="Arial" size="14.0" />
+                  <Font name="Arial" size="16.0" />
                </font>
             </Label>
-            <Label fx:id="unpaidLabel" text="Chưa thu: 0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: red;">
+            <Label fx:id="unpaidLabel" text="Chưa thu: 0" styleClass="label-error" style="-fx-font-size: 16px; -fx-font-weight: bold;">
                <font>
-                  <Font name="Arial" size="14.0" />
+                  <Font name="Arial" size="16.0" />
                </font>
             </Label>
-            <Button fx:id="markPaidButton" text="Đánh dấu đã thu phí" onAction="#handleMarkPaid" style="-fx-font-size: 14px;">
-               <font>
-                  <Font name="Arial" size="14.0" />
-               </font>
-            </Button>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="markPaidButton" text="✅ Đánh dấu đã thu phí" onAction="#handleMarkPaid" styleClass="button-success" />
          </children>
       </HBox>
    </bottom>
