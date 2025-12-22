@@ -265,13 +265,15 @@ month_year_combos AS (
     FROM household_list hl
     CROSS JOIN generate_series(0, 3) as offset_months
 )
-INSERT INTO fee_collections (household_id, month, year, amount, status, payment_date, payment_method)
+INSERT INTO fee_collections (household_id, month, year, amount, paid_amount, status, payment_date, payment_method)
 SELECT 
     myc.household_id,
     myc.month,
     myc.year,
     -- Số tiền ngẫu nhiên từ 500,000 đến 2,000,000
     (500000 + (random() * 1500000)::int)::decimal(15,2) as amount,
+    -- Số tiền đã nộp: sẽ được tính sau dựa trên status (tạm thời 0)
+    0::decimal(15,2) as paid_amount,
     -- 70% đã thu phí, 30% chưa thu
     CASE WHEN random() < 0.7 THEN 'paid' ELSE 'unpaid' END as status,
     -- Nếu đã thu thì có ngày thanh toán (trong tháng đó)
@@ -289,4 +291,9 @@ SELECT
     END as payment_method
 FROM month_year_combos myc
 ON CONFLICT (household_id, month, year) DO NOTHING;
+
+-- Cập nhật paid_amount cho các bản ghi đã thanh toán (status = 'paid')
+UPDATE fee_collections 
+SET paid_amount = amount 
+WHERE status = 'paid' AND paid_amount = 0;
 */

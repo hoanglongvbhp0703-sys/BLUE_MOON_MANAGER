@@ -22,17 +22,25 @@ psql -U postgres -d blue_moon
 - Kết nối database `blue_moon`
 - Mở Query Tool (Tools → Query Tool hoặc click phải database → Query Tool)
 
-### Bước 2: Chạy lệnh SQL sau
+### Bước 2: Chạy lệnh SQL
 
+**Cách A: Dùng psql**
+```powershell
+psql -U postgres -d blue_moon
+```
+
+**Cách B: Dùng pgAdmin Query Tool**
+
+Sau đó chạy các lệnh sau:
 ```sql
--- Thêm cột paid_amount vào bảng fee_collections
+-- Thêm cột paid_amount (nếu chưa có)
 ALTER TABLE fee_collections 
 ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(15, 2) NOT NULL DEFAULT 0;
 
 -- Cập nhật dữ liệu cho các bản ghi đã thanh toán
 UPDATE fee_collections 
 SET paid_amount = amount 
-WHERE status = 'paid' AND (paid_amount IS NULL OR paid_amount = 0);
+WHERE status = 'paid' AND paid_amount = 0;
 ```
 
 ### Bước 3: Kiểm tra

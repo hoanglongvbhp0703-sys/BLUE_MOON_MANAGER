@@ -84,6 +84,9 @@ public class PersonalInfoService {
             existingResident.setTemporaryAddress(request.getTemporaryAddress());
             
             residentRepository.update(existingResident);
+            
+            // Đảm bảo có fee_collection cho tháng hiện tại (nếu chưa có)
+            createFeeCollectionForCurrentMonth(householdId);
         }
         
         // Update user info if changed
@@ -255,6 +258,7 @@ public class PersonalInfoService {
     
     /**
      * Tạo fee_collection cho tháng hiện tại nếu chưa có
+     * Số tiền mặc định: 500,000 VNĐ (có thể cấu hình sau)
      */
     private void createFeeCollectionForCurrentMonth(Integer householdId) throws DbException {
         LocalDate now = LocalDate.now();
@@ -267,12 +271,13 @@ public class PersonalInfoService {
             .anyMatch(f -> f.getMonth() == currentMonth && f.getYear() == currentYear);
         
         if (!exists) {
-            // Tạo fee_collection mới với số tiền mặc định (có thể lấy từ fee_types sau)
+            // Tạo fee_collection mới với số tiền mặc định
+            // Số tiền có thể thay đổi tùy theo yêu cầu (hiện tại: 500,000 VNĐ)
             FeeCollection fee = new FeeCollection();
             fee.setHouseholdId(householdId);
             fee.setMonth(currentMonth);
             fee.setYear(currentYear);
-            fee.setAmount(new BigDecimal("500000")); // Số tiền mặc định, có thể cấu hình sau
+            fee.setAmount(new BigDecimal("500000")); // Số tiền mặc định
             fee.setPaidAmount(BigDecimal.ZERO);
             fee.setStatus("unpaid");
             feeCollectionRepository.create(fee);

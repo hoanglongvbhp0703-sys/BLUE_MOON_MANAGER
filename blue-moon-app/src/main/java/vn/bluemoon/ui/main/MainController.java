@@ -110,9 +110,10 @@ public class MainController {
             
             // Menu "Cá nhân" hiển thị cho tất cả user đã đăng nhập (không phải admin)
             // Admin cũng có thể dùng nhưng thường dùng quản lý nhân khẩu
+            boolean isAdmin = Authorization.hasRole(currentUser, "Quản trị viên");
             personalMenu.setVisible(true);
-            personalInfoMenuItem.setVisible(true);
-            paymentMenuItem.setVisible(true);
+            personalInfoMenuItem.setVisible(!isAdmin);
+            paymentMenuItem.setVisible(!isAdmin);
             
         } catch (DbException e) {
             ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
@@ -152,8 +153,8 @@ public class MainController {
             
             // Menu "Cá nhân" hiển thị cho tất cả user đã đăng nhập (trừ admin)
             boolean hasPersonalInfo = !Authorization.hasRole(currentUser, "Quản trị viên");
-            // Chức năng "Đóng tiền" hiển thị cho tất cả user đã đăng nhập
-            boolean hasPayment = true; // Tất cả user đều có thể đóng tiền
+            // Chức năng "Đóng tiền" chỉ hiển thị cho user (không phải admin)
+            boolean hasPayment = !Authorization.hasRole(currentUser, "Quản trị viên");
             // Chức năng "Đăng xuất" hiển thị cho tất cả user đã đăng nhập
             boolean hasLogout = true; // Tất cả user đều có thể đăng xuất
             
@@ -386,6 +387,12 @@ public class MainController {
                 return;
             }
             
+            // Kiểm tra nếu là admin thì không cho dùng
+            if (Authorization.hasRole(currentUser, "Quản trị viên")) {
+                ErrorDialog.showInfo("Thông tin", "Quản trị viên vui lòng sử dụng chức năng 'Quản lý thu phí' để quản lý thanh toán");
+                return;
+            }
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/payment/PaymentView.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 1000, 700);
@@ -395,6 +402,8 @@ public class MainController {
             stage.show();
         } catch (IOException e) {
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình đóng tiền: " + e.getMessage());
+        } catch (DbException e) {
+            ErrorDialog.showDbError("Lỗi: " + e.getMessage());
         }
     }
     

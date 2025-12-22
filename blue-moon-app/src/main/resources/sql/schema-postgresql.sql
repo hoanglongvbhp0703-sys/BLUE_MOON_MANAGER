@@ -1,6 +1,11 @@
 -- Database schema for Blue Moon Apartment Management System (PostgreSQL)
 -- Based on SRS Document v2.0
 -- This file contains all table structures, indexes, triggers, and functions
+--
+-- LƯU Ý: Nếu database đã tồn tại từ trước và chưa có cột paid_amount,
+-- vui lòng chạy lệnh sau sau khi chạy schema này:
+-- ALTER TABLE fee_collections ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(15, 2) NOT NULL DEFAULT 0;
+-- UPDATE fee_collections SET paid_amount = amount WHERE status = 'paid' AND paid_amount = 0;
 
 -- ============================================
 -- CORE TABLES - Quản lý người dùng và phân quyền
