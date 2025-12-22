@@ -12,7 +12,8 @@ public class FeeCollection {
     private Integer month;
     private Integer year;
     private BigDecimal amount;
-    private String status; // unpaid, paid
+    private BigDecimal paidAmount; // Số tiền đã nộp
+    private String status; // unpaid, paid, partial_paid, overpaid
     private LocalDate paymentDate;
     private String paymentMethod;
     private String notes;
@@ -62,6 +63,14 @@ public class FeeCollection {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount != null ? paidAmount : BigDecimal.ZERO;
+    }
+
+    public void setPaidAmount(BigDecimal paidAmount) {
+        this.paidAmount = paidAmount;
     }
 
     public String getStatus() {
@@ -141,8 +150,19 @@ public class FeeCollection {
         switch (status.toLowerCase()) {
             case "paid": return "Đã thu phí";
             case "unpaid": return "Chưa thu phí";
+            case "partial_paid": return "Đã thanh toán 1 phần";
+            case "overpaid": return "Nộp dư";
             default: return status;
         }
+    }
+    
+    /**
+     * Tính số tiền còn lại cần đóng (có thể âm nếu nộp dư)
+     */
+    public BigDecimal getRemainingAmount() {
+        BigDecimal totalAmount = amount != null ? amount : BigDecimal.ZERO;
+        BigDecimal paid = paidAmount != null ? paidAmount : BigDecimal.ZERO;
+        return totalAmount.subtract(paid);
     }
     
     public String getMonthYearDisplay() {

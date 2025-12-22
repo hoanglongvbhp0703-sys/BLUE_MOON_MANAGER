@@ -31,6 +31,7 @@
             <Menu fx:id="personalMenu" text="Cá nhân">
                <items>
                   <MenuItem fx:id="personalInfoMenuItem" text="Thông tin cá nhân" onAction="#handlePersonalInfo" />
+                  <MenuItem fx:id="paymentMenuItem" text="Đóng tiền" onAction="#handlePayment" />
                </items>
             </Menu>
          </menus>
@@ -76,24 +77,31 @@
                         </children>
                      </VBox>
                      
-                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handleFunctionManagement" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                        <children>
-                           <Label text="⚙️" style="-fx-font-size: 50px;" />
-                           <Label text="Quản lý chức năng" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
-                        </children>
-                     </VBox>
-                     
-                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handlePersonalInfo" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handlePersonalInfo" GridPane.columnIndex="0" GridPane.rowIndex="1">
                         <children>
                            <Label text="👤" style="-fx-font-size: 50px;" />
                            <Label text="Thông tin cá nhân" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
                         </children>
                      </VBox>
                      
-                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handleMenuManagement" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handleLogout" GridPane.columnIndex="1" GridPane.rowIndex="1">
                         <children>
-                           <Label text="📋" style="-fx-font-size: 50px;" />
-                           <Label text="Tạo menu" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                           <Label text="🚪" style="-fx-font-size: 50px;" />
+                           <Label text="Đăng xuất" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                        </children>
+                     </VBox>
+                     
+                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handlePayment" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <children>
+                           <Label text="💳" style="-fx-font-size: 50px;" />
+                           <Label text="Đóng tiền" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                        </children>
+                     </VBox>
+                     
+                     <VBox alignment="CENTER" spacing="15.0" styleClass="function-card" onMouseClicked="#handleFunctionManagement" GridPane.columnIndex="0" GridPane.rowIndex="1" visible="false">
+                        <children>
+                           <Label text="⚙️" style="-fx-font-size: 50px;" />
+                           <Label text="Quản lý chức năng" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
                         </children>
                      </VBox>
                   </GridPane>

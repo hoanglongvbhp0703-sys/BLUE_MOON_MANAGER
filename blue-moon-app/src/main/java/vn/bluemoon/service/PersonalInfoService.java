@@ -2,16 +2,20 @@ package vn.bluemoon.service;
 
 import vn.bluemoon.exception.DbException;
 import vn.bluemoon.model.dto.PersonalInfoRequest;
+import vn.bluemoon.model.entity.FeeCollection;
 import vn.bluemoon.model.entity.Resident;
 import vn.bluemoon.model.entity.User;
+import vn.bluemoon.repository.FeeCollectionRepository;
 import vn.bluemoon.repository.ResidentRepository;
 import vn.bluemoon.repository.UserRepository;
 import vn.bluemoon.util.JdbcUtils;
 import vn.bluemoon.validation.ValidationException;
 import vn.bluemoon.validation.Validators;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Service for managing personal information (đăng ký/cập nhật thông tin cá nhân)
@@ -19,6 +23,7 @@ import java.time.LocalDate;
 public class PersonalInfoService {
     private final ResidentRepository residentRepository = new ResidentRepository();
     private final UserRepository userRepository = new UserRepository();
+    private final FeeCollectionRepository feeCollectionRepository = new FeeCollectionRepository();
     
     /**
      * Register or update personal information for a user
@@ -61,6 +66,9 @@ public class PersonalInfoService {
             resident.setStatus("active");
             
             residentRepository.create(resident);
+            
+            // Tự động tạo fee_collection cho tháng hiện tại (nếu chưa có)
+            createFeeCollectionForCurrentMonth(householdId);
         } else {
             // Update existing resident
             existingResident.setHouseholdId(householdId);
@@ -242,6 +250,32 @@ public class PersonalInfoService {
             throw new DbException("Failed to create apartment");
         } catch (SQLException e) {
             throw new DbException("Error creating apartment: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Tạo fee_collection cho tháng hiện tại nếu chưa có
+     */
+    private void createFeeCollectionForCurrentMonth(Integer householdId) throws DbException {
+        LocalDate now = LocalDate.now();
+        int currentMonth = now.getMonthValue();
+        int currentYear = now.getYear();
+        
+        // Kiểm tra xem đã có fee_collection cho tháng này chưa
+        List<FeeCollection> existingFees = feeCollectionRepository.findByHouseholdId(householdId);
+        boolean exists = existingFees.stream()
+            .anyMatch(f -> f.getMonth() == currentMonth && f.getYear() == currentYear);
+        
+        if (!exists) {
+            // Tạo fee_collection mới với số tiền mặc định (có thể lấy từ fee_types sau)
+            FeeCollection fee = new FeeCollection();
+            fee.setHouseholdId(householdId);
+            fee.setMonth(currentMonth);
+            fee.setYear(currentYear);
+            fee.setAmount(new BigDecimal("500000")); // Số tiền mặc định, có thể cấu hình sau
+            fee.setPaidAmount(BigDecimal.ZERO);
+            fee.setStatus("unpaid");
+            feeCollectionRepository.create(fee);
         }
     }
 }

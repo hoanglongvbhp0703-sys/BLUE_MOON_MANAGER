@@ -220,7 +220,8 @@ CREATE TABLE IF NOT EXISTS fee_collections (
     month INT NOT NULL CHECK (month >= 1 AND month <= 12),
     year INT NOT NULL,
     amount DECIMAL(15, 2) NOT NULL DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'unpaid', -- unpaid, paid
+    paid_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Số tiền đã nộp
+    status VARCHAR(20) DEFAULT 'unpaid', -- unpaid, paid, partial_paid, overpaid
     payment_date DATE,
     payment_method VARCHAR(50), -- cash, bank_transfer, credit_card
     notes TEXT,

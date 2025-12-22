@@ -43,6 +43,61 @@ public class FeeCollectionRepository {
     }
     
     /**
+     * Find fee collections by user ID (through resident)
+     */
+    public List<FeeCollection> findByUserId(Integer userId) throws DbException {
+        List<FeeCollection> fees = new ArrayList<>();
+        String sql = "SELECT fc.*, " +
+                     "a.apartment_code, " +
+                     "h.household_code, " +
+                     "h.owner_name " +
+                     "FROM fee_collections fc " +
+                     "JOIN households h ON fc.household_id = h.id " +
+                     "JOIN apartments a ON h.apartment_id = a.id " +
+                     "JOIN residents r ON r.household_id = h.id " +
+                     "WHERE r.user_id = ? " +
+                     "ORDER BY fc.year DESC, fc.month DESC";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                fees.add(mapResultSetToFeeCollection(rs));
+            }
+        } catch (SQLException e) {
+            throw new DbException("Error finding fee collections by user: " + e.getMessage(), e);
+        }
+        return fees;
+    }
+    
+    /**
+     * Find fee collection by ID
+     */
+    public FeeCollection findById(Integer id) throws DbException {
+        String sql = "SELECT fc.*, " +
+                     "a.apartment_code, " +
+                     "h.household_code, " +
+                     "h.owner_name " +
+                     "FROM fee_collections fc " +
+                     "JOIN households h ON fc.household_id = h.id " +
+                     "JOIN apartments a ON h.apartment_id = a.id " +
+                     "WHERE fc.id = ?";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToFeeCollection(rs);
+            }
+        } catch (SQLException e) {
+            throw new DbException("Error finding fee collection by ID: " + e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    /**
      * Find fee collections by household ID
      */
     public List<FeeCollection> findByHouseholdId(Integer householdId) throws DbException {
@@ -166,8 +221,8 @@ public class FeeCollectionRepository {
      * Create fee collection
      */
     public FeeCollection create(FeeCollection fee) throws DbException {
-        String sql = "INSERT INTO fee_collections (household_id, month, year, amount, status, " +
-                     "payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+        String sql = "INSERT INTO fee_collections (household_id, month, year, amount, paid_amount, status, " +
+                     "payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                      "RETURNING id";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -176,16 +231,17 @@ public class FeeCollectionRepository {
             stmt.setInt(2, fee.getMonth());
             stmt.setInt(3, fee.getYear());
             stmt.setBigDecimal(4, fee.getAmount());
-            stmt.setString(5, fee.getStatus());
+            stmt.setBigDecimal(5, fee.getPaidAmount() != null ? fee.getPaidAmount() : BigDecimal.ZERO);
+            stmt.setString(6, fee.getStatus());
             
             if (fee.getPaymentDate() != null) {
-                stmt.setDate(6, Date.valueOf(fee.getPaymentDate()));
+                stmt.setDate(7, Date.valueOf(fee.getPaymentDate()));
             } else {
-                stmt.setNull(6, Types.DATE);
+                stmt.setNull(7, Types.DATE);
             }
             
-            stmt.setString(7, fee.getPaymentMethod());
-            stmt.setString(8, fee.getNotes());
+            stmt.setString(8, fee.getPaymentMethod());
+            stmt.setString(9, fee.getNotes());
             
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -201,23 +257,24 @@ public class FeeCollectionRepository {
      * Update fee collection
      */
     public void update(FeeCollection fee) throws DbException {
-        String sql = "UPDATE fee_collections SET amount = ?, status = ?, payment_date = ?, " +
+        String sql = "UPDATE fee_collections SET amount = ?, paid_amount = ?, status = ?, payment_date = ?, " +
                      "payment_method = ?, notes = ? WHERE id = ?";
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1, fee.getAmount());
-            stmt.setString(2, fee.getStatus());
+            stmt.setBigDecimal(2, fee.getPaidAmount() != null ? fee.getPaidAmount() : BigDecimal.ZERO);
+            stmt.setString(3, fee.getStatus());
             
             if (fee.getPaymentDate() != null) {
-                stmt.setDate(3, Date.valueOf(fee.getPaymentDate()));
+                stmt.setDate(4, Date.valueOf(fee.getPaymentDate()));
             } else {
-                stmt.setNull(3, Types.DATE);
+                stmt.setNull(4, Types.DATE);
             }
             
-            stmt.setString(4, fee.getPaymentMethod());
-            stmt.setString(5, fee.getNotes());
-            stmt.setInt(6, fee.getId());
+            stmt.setString(5, fee.getPaymentMethod());
+            stmt.setString(6, fee.getNotes());
+            stmt.setInt(7, fee.getId());
             
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -252,6 +309,9 @@ public class FeeCollectionRepository {
         
         BigDecimal amount = rs.getBigDecimal("amount");
         fee.setAmount(amount != null ? amount : BigDecimal.ZERO);
+        
+        BigDecimal paidAmount = rs.getBigDecimal("paid_amount");
+        fee.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
         
         fee.setStatus(rs.getString("status"));
         

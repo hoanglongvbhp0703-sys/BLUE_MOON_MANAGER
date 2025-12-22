@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -59,6 +60,9 @@ public class MainController {
     private MenuItem personalInfoMenuItem;
     
     @FXML
+    private MenuItem paymentMenuItem;
+    
+    @FXML
     private GridPane functionGridPane;
     
     @FXML
@@ -108,6 +112,7 @@ public class MainController {
             // Admin cũng có thể dùng nhưng thường dùng quản lý nhân khẩu
             personalMenu.setVisible(true);
             personalInfoMenuItem.setVisible(true);
+            paymentMenuItem.setVisible(true);
             
         } catch (DbException e) {
             ErrorDialog.showDbError("Lỗi khi kiểm tra quyền: " + e.getMessage());
@@ -147,6 +152,10 @@ public class MainController {
             
             // Menu "Cá nhân" hiển thị cho tất cả user đã đăng nhập (trừ admin)
             boolean hasPersonalInfo = !Authorization.hasRole(currentUser, "Quản trị viên");
+            // Chức năng "Đóng tiền" hiển thị cho tất cả user đã đăng nhập
+            boolean hasPayment = true; // Tất cả user đều có thể đóng tiền
+            // Chức năng "Đăng xuất" hiển thị cho tất cả user đã đăng nhập
+            boolean hasLogout = true; // Tất cả user đều có thể đăng xuất
             
             // Ẩn/hiện các cards dựa trên quyền
             if (functionGridPane != null) {
@@ -171,17 +180,36 @@ public class MainController {
                         else if (colIndex == 2 && rowIndex == 0) {
                             node.setVisible(hasFeeCollection);
                         }
-                        // Card 0,1: Quản lý chức năng
+                        // Card 0,1: Thông tin cá nhân hoặc Quản lý chức năng
                         else if (colIndex == 0 && rowIndex == 1) {
-                            node.setVisible(hasFunctionManagement);
+                            // Kiểm tra xem có phải là card "Thông tin cá nhân" không
+                            if (node instanceof VBox) {
+                                VBox vbox = (VBox) node;
+                                boolean isPersonalInfo = false;
+                                for (javafx.scene.Node child : vbox.getChildren()) {
+                                    if (child instanceof Label) {
+                                        Label label = (Label) child;
+                                        if ("Thông tin cá nhân".equals(label.getText())) {
+                                            isPersonalInfo = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isPersonalInfo) {
+                                    node.setVisible(hasPersonalInfo);
+                                } else {
+                                    // Card "Quản lý chức năng" - ẩn đi vì đã có card khác
+                                    node.setVisible(hasFunctionManagement);
+                                }
+                            }
                         }
-                        // Card 1,1: Thông tin cá nhân
+                        // Card 1,1: Đăng xuất
                         else if (colIndex == 1 && rowIndex == 1) {
-                            node.setVisible(hasPersonalInfo);
+                            node.setVisible(hasLogout);
                         }
-                        // Card 2,1: Tạo menu
+                        // Card 2,1: Đóng tiền
                         else if (colIndex == 2 && rowIndex == 1) {
-                            node.setVisible(hasMenuManagement);
+                            node.setVisible(hasPayment);
                         }
                     }
                 }
@@ -345,6 +373,28 @@ public class MainController {
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình thông tin cá nhân: " + e.getMessage());
         } catch (DbException e) {
             ErrorDialog.showDbError("Lỗi: " + e.getMessage());
+        }
+    }
+    
+    @FXML
+    private void handlePayment() {
+        try {
+            // Kiểm tra user đã đăng nhập
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                ErrorDialog.showError("Lỗi", "Bạn chưa đăng nhập");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/payment/PaymentView.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root, 1000, 700);
+            Stage stage = new Stage();
+            stage.setTitle("Đóng tiền");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            ErrorDialog.showError("Lỗi", "Không thể mở màn hình đóng tiền: " + e.getMessage());
         }
     }
     

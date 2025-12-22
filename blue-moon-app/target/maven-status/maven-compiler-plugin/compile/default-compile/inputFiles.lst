@@ -27,6 +27,7 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\ResidentSe
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\TokenGenerator.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\user\UserManagementController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\fee\FeeCollectionController.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\PaymentService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\PersonalInfoRequest.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Menu.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\function\FunctionManagementController.java
@@ -51,6 +52,7 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\dto\Function
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\UserService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\validation\ValidationException.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\controller\FunctionController.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\payment\PaymentController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\main\MainController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Function.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\FunctionRepository.java

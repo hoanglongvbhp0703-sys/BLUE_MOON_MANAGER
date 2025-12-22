@@ -1,14 +1,17 @@
 vn\bluemoon\util\ErrorDialog.class
 vn\bluemoon\model\dto\FunctionUpsertRequest.class
 vn\bluemoon\ui\function\FunctionDialogController$1.class
+vn\bluemoon\ui\payment\PaymentController.class
 vn\bluemoon\service\UserService.class
 vn\bluemoon\security\Authorization.class
 vn\bluemoon\service\ResidentService.class
+vn\bluemoon\ui\payment\PaymentController$2.class
 vn\bluemoon\exception\AppException.class
 vn\bluemoon\model\entity\FunctionGroup.class
 vn\bluemoon\util\TokenGenerator.class
 vn\bluemoon\repository\FunctionGroupRepository.class
 vn\bluemoon\App.class
+vn\bluemoon\service\PaymentService.class
 vn\bluemoon\util\DatabaseInitializer.class
 vn\bluemoon\ui\register\RegisterController.class
 vn\bluemoon\repository\ResidentRepository.class
@@ -56,6 +59,7 @@ vn\bluemoon\service\RoleGroupService.class
 vn\bluemoon\util\EmailSender.class
 vn\bluemoon\model\entity\PasswordResetToken.class
 vn\bluemoon\service\PasswordResetService.class
+vn\bluemoon\ui\payment\PaymentController$1.class
 vn\bluemoon\repository\GroupRepository.class
 vn\bluemoon\validation\ValidationException.class
 vn\bluemoon\config\DbConfig.class
