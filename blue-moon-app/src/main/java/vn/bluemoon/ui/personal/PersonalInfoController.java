@@ -56,8 +56,10 @@ public class PersonalInfoController {
         // Setup gender combo box
         genderComboBox.getItems().addAll("Nam", "Nữ");
         
-        // Setup relationship combo box
-        relationshipComboBox.getItems().addAll("Chủ hộ", "Vợ", "Chồng", "Con trai", "Con gái", "Bố", "Mẹ", "Khác");
+        // Setup relationship combo box - CHỈ CHO PHÉP "Chủ hộ"
+        relationshipComboBox.getItems().addAll("Chủ hộ");
+        relationshipComboBox.setValue("Chủ hộ");
+        relationshipComboBox.setDisable(true); // Không cho phép thay đổi
         
         // Load existing data if available
         loadPersonalInfo();

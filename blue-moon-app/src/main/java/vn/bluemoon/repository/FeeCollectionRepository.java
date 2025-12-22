@@ -17,17 +17,20 @@ public class FeeCollectionRepository {
     
     /**
      * Find all fee collections with household and apartment info
+     * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
+     * Đảm bảo mỗi household chỉ có 1 chủ hộ được hiển thị
      */
     public List<FeeCollection> findAll() throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
-        String sql = "SELECT fc.*, " +
+        String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
                      "h.owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
-                     "ORDER BY fc.year DESC, fc.month DESC, fc.created_at DESC";
+                     "WHERE EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "ORDER BY fc.id, fc.year DESC, fc.month DESC, fc.created_at DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
              Statement stmt = conn.createStatement();
@@ -44,6 +47,7 @@ public class FeeCollectionRepository {
     
     /**
      * Find fee collections by user ID (through resident)
+     * CHỈ LẤY CÁC FEE_COLLECTIONS CỦA CHỦ HỘ
      */
     public List<FeeCollection> findByUserId(Integer userId) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
@@ -55,7 +59,7 @@ public class FeeCollectionRepository {
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
                      "JOIN residents r ON r.household_id = h.id " +
-                     "WHERE r.user_id = ? " +
+                     "WHERE r.user_id = ? AND r.relationship = 'Chủ hộ' " +
                      "ORDER BY fc.year DESC, fc.month DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -99,10 +103,11 @@ public class FeeCollectionRepository {
     
     /**
      * Find fee collections by household ID
+     * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
      */
     public List<FeeCollection> findByHouseholdId(Integer householdId) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
-        String sql = "SELECT fc.*, " +
+        String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
                      "h.owner_name " +
@@ -110,7 +115,8 @@ public class FeeCollectionRepository {
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
                      "WHERE fc.household_id = ? " +
-                     "ORDER BY fc.year DESC, fc.month DESC";
+                     "AND EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "ORDER BY fc.id, fc.year DESC, fc.month DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -127,10 +133,11 @@ public class FeeCollectionRepository {
     
     /**
      * Find fee collection by month and year
+     * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
      */
     public List<FeeCollection> findByMonthYear(Integer month, Integer year) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
-        String sql = "SELECT fc.*, " +
+        String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
                      "h.owner_name " +
@@ -138,7 +145,8 @@ public class FeeCollectionRepository {
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
                      "WHERE fc.month = ? AND fc.year = ? " +
-                     "ORDER BY fc.created_at DESC";
+                     "AND EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "ORDER BY fc.id, fc.created_at DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -156,34 +164,40 @@ public class FeeCollectionRepository {
     
     /**
      * Search fee collections
+     * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
+     * Đảm bảo mỗi household chỉ có 1 chủ hộ được hiển thị
      */
     public List<FeeCollection> search(String apartmentCode, String householdCode, String ownerName, 
                                       Integer month, Integer year, String status) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT fc.*, " +
+            "SELECT DISTINCT ON (fc.id) fc.*, " +
             "a.apartment_code, " +
             "h.household_code, " +
             "h.owner_name " +
             "FROM fee_collections fc " +
             "JOIN households h ON fc.household_id = h.id " +
             "JOIN apartments a ON h.apartment_id = a.id " +
-            "WHERE 1=1"
+            "WHERE EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ'"
         );
         List<Object> params = new ArrayList<>();
         int paramIndex = 1;
         
+        // Thêm điều kiện tìm kiếm theo tên chủ hộ vào EXISTS subquery
+        if (ownerName != null && !ownerName.trim().isEmpty()) {
+            sql.append(" AND r.full_name ILIKE ?");
+            params.add("%" + ownerName.trim() + "%");
+        }
+        sql.append(")");
+        
+        // Các điều kiện tìm kiếm khác
         if (apartmentCode != null && !apartmentCode.trim().isEmpty()) {
             sql.append(" AND a.apartment_code ILIKE ?");
-            params.add("%" + apartmentCode + "%");
+            params.add("%" + apartmentCode.trim() + "%");
         }
         if (householdCode != null && !householdCode.trim().isEmpty()) {
             sql.append(" AND h.household_code ILIKE ?");
-            params.add("%" + householdCode + "%");
-        }
-        if (ownerName != null && !ownerName.trim().isEmpty()) {
-            sql.append(" AND h.owner_name ILIKE ?");
-            params.add("%" + ownerName + "%");
+            params.add("%" + householdCode.trim() + "%");
         }
         if (month != null) {
             sql.append(" AND fc.month = ?");
@@ -198,13 +212,13 @@ public class FeeCollectionRepository {
             params.add(status);
         }
         
-        sql.append(" ORDER BY fc.year DESC, fc.month DESC, fc.created_at DESC");
+        sql.append(" ORDER BY fc.id, fc.year DESC, fc.month DESC, fc.created_at DESC");
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             
-            for (Object param : params) {
-                stmt.setObject(paramIndex++, param);
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
             }
             
             ResultSet rs = stmt.executeQuery();

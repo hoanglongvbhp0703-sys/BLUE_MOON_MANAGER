@@ -153,33 +153,67 @@ public class FeeCollectionController {
     
     @FXML
     private void handleSearch() {
-        String apartmentCode = searchApartmentCodeField.getText().trim();
-        String householdCode = searchHouseholdCodeField.getText().trim();
-        String ownerName = searchOwnerNameField.getText().trim();
+        String apartmentCode = searchApartmentCodeField.getText();
+        String householdCode = searchHouseholdCodeField.getText();
+        String ownerName = searchOwnerNameField.getText();
         Integer month = searchMonthCombo.getValue();
         Integer year = searchYearCombo.getValue();
         String status = searchStatusCombo.getValue();
         
+        // Kiểm tra xem có điều kiện tìm kiếm nào không
+        boolean hasSearchCriteria = (apartmentCode != null && !apartmentCode.trim().isEmpty()) ||
+                                    (householdCode != null && !householdCode.trim().isEmpty()) ||
+                                    (ownerName != null && !ownerName.trim().isEmpty()) ||
+                                    month != null ||
+                                    year != null ||
+                                    (status != null && !status.equals("Tất cả"));
+        
         // Convert status display to database value
         String statusValue = null;
         if (status != null && !status.equals("Tất cả")) {
-            statusValue = status.equals("Đã thu phí") ? "paid" : "unpaid";
+            if (status.equals("Đã thu phí")) {
+                statusValue = "paid";
+            } else if (status.equals("Chưa thu phí")) {
+                statusValue = "unpaid";
+            } else {
+                statusValue = status; // partial_paid, overpaid, etc.
+            }
         }
         
         try {
-            List<FeeCollection> fees = feeService.searchFeeCollections(
-                apartmentCode.isEmpty() ? null : apartmentCode,
-                householdCode.isEmpty() ? null : householdCode,
-                ownerName.isEmpty() ? null : ownerName,
-                month,
-                year,
-                statusValue
-            );
+            List<FeeCollection> fees;
+            
+            if (!hasSearchCriteria) {
+                // Nếu không có điều kiện tìm kiếm, lấy tất cả
+                fees = feeService.getAllFeeCollections();
+            } else {
+                // Có điều kiện tìm kiếm, gọi search
+                fees = feeService.searchFeeCollections(
+                    (apartmentCode == null || apartmentCode.trim().isEmpty()) ? null : apartmentCode.trim(),
+                    (householdCode == null || householdCode.trim().isEmpty()) ? null : householdCode.trim(),
+                    (ownerName == null || ownerName.trim().isEmpty()) ? null : ownerName.trim(),
+                    month,
+                    year,
+                    statusValue
+                );
+            }
+            
             feeList.clear();
             feeList.addAll(fees);
+            feeTable.setItems(feeList);
             updateStatistics();
+            
+            // Debug: In ra số lượng kết quả tìm được
+            System.out.println("Tìm thấy " + fees.size() + " kết quả");
+            if (fees.isEmpty() && hasSearchCriteria) {
+                ErrorDialog.showInfo("Thông báo", "Không tìm thấy kết quả nào phù hợp với điều kiện tìm kiếm.");
+            }
         } catch (DbException e) {
-            ErrorDialog.showDbError(e.getMessage());
+            e.printStackTrace();
+            ErrorDialog.showDbError("Lỗi tìm kiếm: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", "Lỗi khi tìm kiếm: " + e.getMessage());
         }
     }
     

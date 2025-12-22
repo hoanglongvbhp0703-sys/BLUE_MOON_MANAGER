@@ -47,6 +47,10 @@ public class PersonalInfoService {
         // Find or create household
         Integer householdId = findOrCreateHousehold(request, user);
         
+        // CHỈ CHO PHÉP ĐĂNG KÝ VỚI ROLE "Chủ hộ"
+        // Đảm bảo relationship luôn là "Chủ hộ"
+        String relationship = "Chủ hộ";
+        
         // Create or update resident
         if (existingResident == null) {
             // Create new resident
@@ -57,7 +61,7 @@ public class PersonalInfoService {
             resident.setIdCard(request.getIdCard());
             resident.setDateOfBirth(request.getDateOfBirth());
             resident.setGender(request.getGender());
-            resident.setRelationship(request.getRelationship() != null ? request.getRelationship() : "Chủ hộ");
+            resident.setRelationship(relationship); // Luôn là "Chủ hộ"
             resident.setPhone(request.getPhone() != null ? request.getPhone() : user.getPhone());
             resident.setEmail(request.getEmail() != null ? request.getEmail() : user.getEmail());
             resident.setOccupation(request.getOccupation());
@@ -67,7 +71,7 @@ public class PersonalInfoService {
             
             residentRepository.create(resident);
             
-            // Tự động tạo fee_collection cho tháng hiện tại (nếu chưa có)
+            // Tự động tạo fee_collection cho tháng hiện tại (chỉ cho chủ hộ)
             createFeeCollectionForCurrentMonth(householdId);
         } else {
             // Update existing resident
@@ -76,7 +80,7 @@ public class PersonalInfoService {
             existingResident.setIdCard(request.getIdCard());
             existingResident.setDateOfBirth(request.getDateOfBirth());
             existingResident.setGender(request.getGender());
-            existingResident.setRelationship(request.getRelationship() != null ? request.getRelationship() : existingResident.getRelationship());
+            existingResident.setRelationship(relationship); // Luôn là "Chủ hộ"
             existingResident.setPhone(request.getPhone() != null ? request.getPhone() : existingResident.getPhone());
             existingResident.setEmail(request.getEmail() != null ? request.getEmail() : existingResident.getEmail());
             existingResident.setOccupation(request.getOccupation());
@@ -85,7 +89,7 @@ public class PersonalInfoService {
             
             residentRepository.update(existingResident);
             
-            // Đảm bảo có fee_collection cho tháng hiện tại (nếu chưa có)
+            // Đảm bảo có fee_collection cho tháng hiện tại (chỉ cho chủ hộ)
             createFeeCollectionForCurrentMonth(householdId);
         }
         

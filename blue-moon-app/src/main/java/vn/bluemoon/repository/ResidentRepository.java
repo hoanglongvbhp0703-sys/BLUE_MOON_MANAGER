@@ -15,6 +15,7 @@ public class ResidentRepository {
     
     /**
      * Find all residents with household and apartment info
+     * CHỈ LẤY CHỦ HỘ (relationship = 'Chủ hộ')
      */
     public List<Resident> findAll() throws DbException {
         List<Resident> residents = new ArrayList<>();
@@ -25,6 +26,7 @@ public class ResidentRepository {
                      "FROM residents r " +
                      "JOIN households h ON r.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
+                     "WHERE r.relationship = 'Chủ hộ' " +
                      "ORDER BY r.created_at DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -42,6 +44,7 @@ public class ResidentRepository {
     
     /**
      * Search residents by name, apartment code, or household code
+     * CHỈ LẤY CHỦ HỘ (relationship = 'Chủ hộ')
      */
     public List<Resident> search(String name, String apartmentCode, String householdCode) throws DbException {
         List<Resident> residents = new ArrayList<>();
@@ -53,7 +56,7 @@ public class ResidentRepository {
             "FROM residents r " +
             "JOIN households h ON r.household_id = h.id " +
             "JOIN apartments a ON h.apartment_id = a.id " +
-            "WHERE 1=1"
+            "WHERE r.relationship = 'Chủ hộ'"
         );
         List<Object> params = new ArrayList<>();
         
