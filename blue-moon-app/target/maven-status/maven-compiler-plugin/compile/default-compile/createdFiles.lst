@@ -6,6 +6,7 @@ vn\bluemoon\service\UserService.class
 vn\bluemoon\security\Authorization.class
 vn\bluemoon\service\ResidentService.class
 vn\bluemoon\ui\payment\PaymentController$2.class
+vn\bluemoon\ui\dialog\ChangePasswordDialog.class
 vn\bluemoon\exception\AppException.class
 vn\bluemoon\model\entity\FunctionGroup.class
 vn\bluemoon\util\TokenGenerator.class
@@ -13,6 +14,7 @@ vn\bluemoon\repository\FunctionGroupRepository.class
 vn\bluemoon\App.class
 vn\bluemoon\service\PaymentService.class
 vn\bluemoon\util\DatabaseInitializer.class
+vn\bluemoon\service\PasswordChangeService.class
 vn\bluemoon\ui\register\RegisterController.class
 vn\bluemoon\repository\ResidentRepository.class
 vn\bluemoon\util\JdbcUtils.class

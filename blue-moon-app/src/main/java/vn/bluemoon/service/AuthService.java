@@ -16,6 +16,7 @@ import vn.bluemoon.validation.Validators;
 public class AuthService {
     private final UserRepository userRepository = new UserRepository();
     private final SessionManager sessionManager = SessionManager.getInstance();
+    private final PasswordChangeService passwordChangeService = new PasswordChangeService();
 
     /**
      * Login user
@@ -52,6 +53,12 @@ public class AuthService {
         // Check if user is active
         if (!user.getIsActive()) {
             throw new AuthException("Tài khoản đã bị vô hiệu hóa");
+        }
+        
+        // Check if user needs to change password
+        if (passwordChangeService.needsPasswordChange(user)) {
+            // Set flag để UI biết cần đổi mật khẩu
+            user.setMustChangePassword(true);
         }
         
         // Create session

@@ -438,8 +438,10 @@ public class MainController {
             
             Scene scene = new Scene(root, 800, 600);
             primaryStage.setTitle("Blue Moon - Hệ thống quản lý chung cư");
+            primaryStage.setMaximized(false); // Reset về kích thước bình thường
             primaryStage.setScene(scene);
             primaryStage.setResizable(false);
+            primaryStage.centerOnScreen(); // Căn giữa màn hình
             
         } catch (Exception e) {
             e.printStackTrace();

@@ -117,7 +117,36 @@ public class UserService {
             userRepository.update(user);
         }
     }
+
+    /**
+     * Change user password
+     * @param userId User ID
+     * @param newPassword New password
+     * @throws ValidationException if validation fails
+     * @throws DbException if database error occurs
+     */
+    public void changePassword(Integer userId, String newPassword) throws ValidationException, DbException {
+        Validators.validatePassword(newPassword);
+        
+        User user = userRepository.findById(userId);
+        if (user != null) {
+            user.setPasswordHash(PasswordHasher.hash(newPassword));
+            user.setMustChangePassword(false);
+            // Cập nhật ngày đổi mật khẩu lần cuối
+            user.setLastPasswordChangeDate(java.time.LocalDate.now());
+            // Hủy yêu cầu đổi mật khẩu ngay lập tức nếu đã đổi
+            if (user.getPasswordChangeRequiredDate() != null) {
+                java.time.LocalDate today = java.time.LocalDate.now();
+                if (today.isAfter(user.getPasswordChangeRequiredDate()) || 
+                    today.isEqual(user.getPasswordChangeRequiredDate())) {
+                    user.setPasswordChangeRequiredDate(null);
+                }
+            }
+            userRepository.update(user);
+        }
+    }
 }
+
 
 
 

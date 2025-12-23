@@ -15,6 +15,9 @@ public class User {
     private String address;
     private Boolean isActive;
     private Boolean mustChangePassword;
+    private java.time.LocalDate passwordChangeRequiredDate; // Ngày yêu cầu đổi mật khẩu
+    private Integer passwordChangePeriodDays; // Số ngày định kỳ phải đổi mật khẩu
+    private java.time.LocalDate lastPasswordChangeDate; // Ngày đổi mật khẩu lần cuối
     private String facebookId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -105,6 +108,30 @@ public class User {
         this.mustChangePassword = mustChangePassword;
     }
 
+    public java.time.LocalDate getPasswordChangeRequiredDate() {
+        return passwordChangeRequiredDate;
+    }
+
+    public void setPasswordChangeRequiredDate(java.time.LocalDate passwordChangeRequiredDate) {
+        this.passwordChangeRequiredDate = passwordChangeRequiredDate;
+    }
+
+    public Integer getPasswordChangePeriodDays() {
+        return passwordChangePeriodDays;
+    }
+
+    public void setPasswordChangePeriodDays(Integer passwordChangePeriodDays) {
+        this.passwordChangePeriodDays = passwordChangePeriodDays;
+    }
+
+    public java.time.LocalDate getLastPasswordChangeDate() {
+        return lastPasswordChangeDate;
+    }
+
+    public void setLastPasswordChangeDate(java.time.LocalDate lastPasswordChangeDate) {
+        this.lastPasswordChangeDate = lastPasswordChangeDate;
+    }
+
     public String getFacebookId() {
         return facebookId;
     }
@@ -140,6 +167,7 @@ public class User {
                 '}';
     }
 }
+
 
 
 

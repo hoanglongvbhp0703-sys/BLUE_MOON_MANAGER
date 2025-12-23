@@ -62,8 +62,33 @@ public class LoginController {
             LoginRequest request = new LoginRequest(username, password);
             String sessionToken = authService.login(request);
             
+            // Get current user
+            vn.bluemoon.model.entity.User currentUser = authService.getCurrentUser(sessionToken);
+            
             // Store session token
-            sessionManager.createSession(authService.getCurrentUser(sessionToken));
+            sessionManager.createSession(currentUser);
+            
+            // Check if user needs to change password
+            if (currentUser != null && Boolean.TRUE.equals(currentUser.getMustChangePassword())) {
+                // Show change password dialog
+                boolean passwordChanged = vn.bluemoon.ui.dialog.ChangePasswordDialog.show(
+                    currentUser.getId(), 
+                    "Bạn cần đổi mật khẩu. Vui lòng đổi mật khẩu để tiếp tục."
+                );
+                
+                if (!passwordChanged) {
+                    // User cancelled or failed to change password, logout
+                    authService.logout(sessionToken);
+                    showError("Bạn phải đổi mật khẩu để tiếp tục sử dụng hệ thống");
+                    return;
+                }
+                
+                // Reload user to get updated info
+                currentUser = authService.getCurrentUser(sessionToken);
+                if (currentUser != null) {
+                    sessionManager.createSession(currentUser);
+                }
+            }
             
             // Navigate to main application
             navigateToMain(sessionToken);
@@ -132,8 +157,14 @@ public class LoginController {
             Scene scene = new Scene(root, 1200, 800);
             if (stage != null) {
                 stage.setTitle("Blue Moon - Hệ thống quản lý chung cư");
-                stage.setScene(scene);
                 stage.setResizable(true);
+                stage.setScene(scene);
+                // Đảm bảo reset trước khi set maximized để tránh lỗi
+                stage.setMaximized(false);
+                // Sử dụng Platform.runLater để đảm bảo setMaximized được gọi sau khi scene đã được set
+                javafx.application.Platform.runLater(() -> {
+                    stage.setMaximized(true); // Hiển thị toàn màn hình
+                });
             }
         } catch (IOException e) {
             ErrorDialog.showError("Lỗi", "Không thể mở màn hình chính: " + e.getMessage());

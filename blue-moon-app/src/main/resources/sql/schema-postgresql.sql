@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS users (
     address TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     must_change_password BOOLEAN DEFAULT FALSE,
+    password_change_required_date DATE NULL, -- Ngày yêu cầu đổi mật khẩu (null nếu không có yêu cầu)
+    password_change_period_days INTEGER NULL, -- Số ngày định kỳ phải đổi mật khẩu (null nếu không có định kỳ)
+    last_password_change_date DATE NULL, -- Ngày đổi mật khẩu lần cuối
     facebook_id VARCHAR(100) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -312,3 +315,26 @@ CREATE TRIGGER update_fee_collections_updated_at BEFORE UPDATE ON fee_collection
 
 CREATE TRIGGER update_fee_types_updated_at BEFORE UPDATE ON fee_types
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- MIGRATION: Thêm các cột quản lý đổi mật khẩu
+-- ============================================
+-- Phần này đảm bảo tương thích với database đã tồn tại từ trước
+-- Nếu các cột đã tồn tại, các lệnh ALTER TABLE sẽ không làm gì (IF NOT EXISTS)
+
+-- Add password_change_required_date column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password_change_required_date DATE NULL;
+
+-- Add password_change_period_days column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password_change_period_days INTEGER NULL;
+
+-- Add last_password_change_date column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS last_password_change_date DATE NULL;
+
+-- Update existing users: set last_password_change_date to created_at if null
+UPDATE users 
+SET last_password_change_date = DATE(created_at) 
+WHERE last_password_change_date IS NULL AND created_at IS NOT NULL;

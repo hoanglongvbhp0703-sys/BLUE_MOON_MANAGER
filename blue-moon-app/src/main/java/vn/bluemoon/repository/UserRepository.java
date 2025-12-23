@@ -90,7 +90,8 @@ public class UserRepository {
      */
     public User create(User user) throws DbException {
         String sql = "INSERT INTO users (username, email, password_hash, full_name, phone, address, " +
-                     "is_active, must_change_password, facebook_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                     "is_active, must_change_password, password_change_required_date, password_change_period_days, " +
+                     "last_password_change_date, facebook_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, user.getUsername());
@@ -101,7 +102,22 @@ public class UserRepository {
             stmt.setString(6, user.getAddress());
             stmt.setBoolean(7, user.getIsActive() != null ? user.getIsActive() : true);
             stmt.setBoolean(8, user.getMustChangePassword() != null ? user.getMustChangePassword() : false);
-            stmt.setString(9, user.getFacebookId());
+            if (user.getPasswordChangeRequiredDate() != null) {
+                stmt.setDate(9, java.sql.Date.valueOf(user.getPasswordChangeRequiredDate()));
+            } else {
+                stmt.setNull(9, java.sql.Types.DATE);
+            }
+            if (user.getPasswordChangePeriodDays() != null) {
+                stmt.setInt(10, user.getPasswordChangePeriodDays());
+            } else {
+                stmt.setNull(10, java.sql.Types.INTEGER);
+            }
+            if (user.getLastPasswordChangeDate() != null) {
+                stmt.setDate(11, java.sql.Date.valueOf(user.getLastPasswordChangeDate()));
+            } else {
+                stmt.setNull(11, java.sql.Types.DATE);
+            }
+            stmt.setString(12, user.getFacebookId());
             
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -126,7 +142,9 @@ public class UserRepository {
      */
     public void update(User user) throws DbException {
         String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, full_name = ?, " +
-                     "phone = ?, address = ?, is_active = ?, must_change_password = ?, facebook_id = ? WHERE id = ?";
+                     "phone = ?, address = ?, is_active = ?, must_change_password = ?, " +
+                     "password_change_required_date = ?, password_change_period_days = ?, " +
+                     "last_password_change_date = ?, facebook_id = ? WHERE id = ?";
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.getUsername());
@@ -137,8 +155,23 @@ public class UserRepository {
             stmt.setString(6, user.getAddress());
             stmt.setBoolean(7, user.getIsActive() != null ? user.getIsActive() : true);
             stmt.setBoolean(8, user.getMustChangePassword() != null ? user.getMustChangePassword() : false);
-            stmt.setString(9, user.getFacebookId());
-            stmt.setInt(10, user.getId());
+            if (user.getPasswordChangeRequiredDate() != null) {
+                stmt.setDate(9, java.sql.Date.valueOf(user.getPasswordChangeRequiredDate()));
+            } else {
+                stmt.setNull(9, java.sql.Types.DATE);
+            }
+            if (user.getPasswordChangePeriodDays() != null) {
+                stmt.setInt(10, user.getPasswordChangePeriodDays());
+            } else {
+                stmt.setNull(10, java.sql.Types.INTEGER);
+            }
+            if (user.getLastPasswordChangeDate() != null) {
+                stmt.setDate(11, java.sql.Date.valueOf(user.getLastPasswordChangeDate()));
+            } else {
+                stmt.setNull(11, java.sql.Types.DATE);
+            }
+            stmt.setString(12, user.getFacebookId());
+            stmt.setInt(13, user.getId());
             
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -235,6 +268,35 @@ public class UserRepository {
         user.setAddress(rs.getString("address"));
         user.setIsActive(rs.getBoolean("is_active"));
         user.setMustChangePassword(rs.getBoolean("must_change_password"));
+        
+        // Kiểm tra và đọc các cột mới (có thể chưa tồn tại trong database cũ)
+        try {
+            java.sql.Date passwordChangeRequiredDate = rs.getDate("password_change_required_date");
+            if (passwordChangeRequiredDate != null) {
+                user.setPasswordChangeRequiredDate(passwordChangeRequiredDate.toLocalDate());
+            }
+        } catch (SQLException e) {
+            // Cột chưa tồn tại, bỏ qua
+        }
+        
+        try {
+            Integer passwordChangePeriodDays = rs.getInt("password_change_period_days");
+            if (!rs.wasNull()) {
+                user.setPasswordChangePeriodDays(passwordChangePeriodDays);
+            }
+        } catch (SQLException e) {
+            // Cột chưa tồn tại, bỏ qua
+        }
+        
+        try {
+            java.sql.Date lastPasswordChangeDate = rs.getDate("last_password_change_date");
+            if (lastPasswordChangeDate != null) {
+                user.setLastPasswordChangeDate(lastPasswordChangeDate.toLocalDate());
+            }
+        } catch (SQLException e) {
+            // Cột chưa tồn tại, bỏ qua
+        }
+        
         user.setFacebookId(rs.getString("facebook_id"));
         Timestamp createdAt = rs.getTimestamp("created_at");
         if (createdAt != null) {

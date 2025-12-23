@@ -2,6 +2,7 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\model\entity\Passw
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\controller\UserAdminController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\JdbcUtils.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\exception\AppException.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\PasswordChangeService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\GroupRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\security\PasswordHasher.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\controller\AuthController.java
@@ -25,6 +26,7 @@ C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\TokenRe
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\repository\UserRepository.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\ResidentService.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\util\TokenGenerator.java
+C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\dialog\ChangePasswordDialog.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\user\UserManagementController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\ui\fee\FeeCollectionController.java
 C:\Users\HP\blue_moon\blue-moon-app\src\main\java\vn\bluemoon\service\PaymentService.java

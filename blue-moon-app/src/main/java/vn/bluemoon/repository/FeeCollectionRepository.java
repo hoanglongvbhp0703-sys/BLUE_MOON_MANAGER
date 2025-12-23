@@ -181,7 +181,6 @@ public class FeeCollectionRepository {
             "WHERE EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ'"
         );
         List<Object> params = new ArrayList<>();
-        int paramIndex = 1;
         
         // Thêm điều kiện tìm kiếm theo tên chủ hộ vào EXISTS subquery
         if (ownerName != null && !ownerName.trim().isEmpty()) {
