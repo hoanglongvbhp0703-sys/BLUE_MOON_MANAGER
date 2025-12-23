@@ -306,127 +306,25 @@ Sau khi chạy seed data:
 
 ```
 blue-moon-app/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── vn/bluemoon/
-│   │   │       ├── App.java                    # Main class - Entry point
-│   │   │       ├── config/                     # Cấu hình
-│   │   │       │   ├── AppConfig.java          # Cấu hình ứng dụng
-│   │   │       │   └── DbConfig.java           # Cấu hình database
-│   │   │       ├── controller/                 # Controllers (legacy)
-│   │   │       ├── exception/                  # Exception classes
-│   │   │       │   ├── AppException.java
-│   │   │       │   ├── AuthException.java
-│   │   │       │   └── DbException.java
-│   │   │       ├── model/
-│   │   │       │   ├── dto/                     # Data Transfer Objects
-│   │   │       │   │   ├── FunctionUpsertRequest.java
-│   │   │       │   │   ├── LoginRequest.java
-│   │   │       │   │   ├── PersonalInfoRequest.java
-│   │   │       │   │   ├── RegisterRequest.java
-│   │   │       │   │   └── UserSearchRequest.java
-│   │   │       │   └── entity/                  # Entity classes
-│   │   │       │       ├── FeeCollection.java
-│   │   │       │       ├── Function.java
-│   │   │       │       ├── FunctionGroup.java
-│   │   │       │       ├── Group.java
-│   │   │       │       ├── Menu.java
-│   │   │       │       ├── PasswordResetToken.java
-│   │   │       │       ├── Resident.java
-│   │   │       │       ├── Role.java
-│   │   │       │       └── User.java
-│   │   │       ├── repository/                  # Data access layer
-│   │   │       │   ├── FeeCollectionRepository.java
-│   │   │       │   ├── FunctionGroupRepository.java
-│   │   │       │   ├── FunctionRepository.java
-│   │   │       │   ├── GroupRepository.java
-│   │   │       │   ├── MenuRepository.java
-│   │   │       │   ├── ResidentRepository.java
-│   │   │       │   ├── RoleRepository.java
-│   │   │       │   ├── TokenRepository.java
-│   │   │       │   └── UserRepository.java
-│   │   │       ├── security/                   # Security và authorization
-│   │   │       │   ├── Authorization.java
-│   │   │       │   ├── PasswordHasher.java
-│   │   │       │   └── SessionManager.java
-│   │   │       ├── service/                     # Business logic
-│   │   │       │   ├── AuthService.java
-│   │   │       │   ├── FeeCollectionService.java
-│   │   │       │   ├── FunctionService.java
-│   │   │       │   ├── MenuService.java
-│   │   │       │   ├── PasswordChangeService.java
-│   │   │       │   ├── PasswordResetService.java
-│   │   │       │   ├── PaymentService.java
-│   │   │       │   ├── PersonalInfoService.java
-│   │   │       │   ├── ResidentService.java
-│   │   │       │   ├── RoleGroupService.java
-│   │   │       │   └── UserService.java
-│   │   │       ├── ui/                          # JavaFX UI Controllers
-│   │   │       │   ├── dialog/
-│   │   │       │   │   └── ChangePasswordDialog.java
-│   │   │       │   ├── fee/
-│   │   │       │   │   └── FeeCollectionController.java
-│   │   │       │   ├── function/
-│   │   │       │   │   ├── FunctionDialogController.java
-│   │   │       │   │   └── FunctionManagementController.java
-│   │   │       │   ├── login/
-│   │   │       │   │   └── LoginController.java
-│   │   │       │   ├── main/
-│   │   │       │   │   └── MainController.java
-│   │   │       │   ├── payment/
-│   │   │       │   │   └── PaymentController.java
-│   │   │       │   ├── personal/
-│   │   │       │   │   └── PersonalInfoController.java
-│   │   │       │   ├── register/
-│   │   │       │   │   └── RegisterController.java
-│   │   │       │   ├── resident/
-│   │   │       │   │   └── ResidentManagementController.java
-│   │   │       │   └── user/
-│   │   │       │       └── UserManagementController.java
-│   │   │       ├── util/                        # Utilities
-│   │   │       │   ├── AppLogger.java
-│   │   │       │   ├── DatabaseInitializer.java
-│   │   │       │   ├── EmailSender.java
-│   │   │       │   ├── ErrorDialog.java
-│   │   │       │   ├── JdbcUtils.java
-│   │   │       │   ├── PasswordHasher.java
-│   │   │       │   └── TokenGenerator.java
-│   │   │       └── validation/                  # Validation
-│   │   │           ├── ValidationException.java
-│   │   │           └── Validators.java
-│   │   └── resources/
-│   │       ├── application.properties           # Cấu hình
-│   │       ├── css/
-│   │       │   └── styles.css                  # CSS styles
-│   │       ├── sql/
-│   │       │   ├── schema-postgresql.sql       # Schema PostgreSQL
-│   │       │   ├── schema.sql                  # Schema MySQL
-│   │       │   ├── seed-postgresql.sql         # Seed data PostgreSQL
-│   │       │   └── seed.sql                    # Seed data MySQL
-│   │       └── ui/                              # FXML files
-│   │           ├── dialog/
-│   │           │   └── ChangePasswordDialog.fxml
-│   │           ├── fee/
-│   │           │   └── FeeCollectionView.fxml
-│   │           ├── function/
-│   │           │   ├── FunctionDialogView.fxml
-│   │           │   └── FunctionManagementView.fxml
-│   │           ├── login/
-│   │           │   └── LoginView.fxml
-│   │           ├── main/
-│   │           │   └── MainView.fxml
-│   │           ├── payment/
-│   │           │   └── PaymentView.fxml
-│   │           ├── personal/
-│   │           │   └── PersonalInfoView.fxml
-│   │           ├── register/
-│   │           │   └── RegisterView.fxml
-│   │           ├── resident/
-│   │           │   └── ResidentManagementView.fxml
-│   │           └── user/
-│   │               └── UserManagementView.fxml
-│   └── test/
+├── src/main/
+│   ├── java/vn/bluemoon/
+│   │   ├── App.java                    # Main class
+│   │   ├── config/                     # Cấu hình
+│   │   ├── exception/                  # Exception classes
+│   │   ├── model/
+│   │   │   ├── dto/                     # Data Transfer Objects
+│   │   │   └── entity/                  # Entity classes
+│   │   ├── repository/                  # Data access layer
+│   │   ├── security/                   # Security và authorization
+│   │   ├── service/                     # Business logic
+│   │   ├── ui/                          # JavaFX UI Controllers
+│   │   ├── util/                        # Utilities
+│   │   └── validation/                  # Validation
+│   └── resources/
+│       ├── application.properties       # Cấu hình
+│       ├── css/styles.css               # CSS styles
+│       ├── sql/                          # SQL scripts
+│       └── ui/                           # FXML files
 └── pom.xml
 ```
 
