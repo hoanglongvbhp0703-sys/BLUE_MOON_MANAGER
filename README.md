@@ -3,31 +3,101 @@
 Phần mềm quản lý nhân khẩu và thu phí chung cư Blue Moon
 
 **Phiên bản:** 1.0.0  
-**Ngày cập nhật:** 22/12/2025  
+**Ngày cập nhật:** 23/12/2025  
 **Nhóm:** 24
 
 ---
 
 ## Mục lục
 
-1. [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
-2. [Cài đặt và cấu hình](#cài-đặt-và-cấu-hình)
-3. [Tài khoản mặc định](#tài-khoản-mặc-định)
-4. [Tính năng](#tính-năng)
-5. [Phân quyền người dùng](#phân-quyền-người-dùng)
-6. [Cấu trúc dự án](#cấu-trúc-dự-án)
-7. [Tài liệu SRS](#tài-liệu-srs)
-8. [Báo cáo kiểm tra project](#báo-cáo-kiểm-tra-project)
-9. [Khắc phục lỗi](#khắc-phục-lỗi)
+1. [Giới thiệu](#giới-thiệu)
+2. [Tính năng chính](#tính-năng-chính)
+3. [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
+4. [Cài đặt và cấu hình](#cài-đặt-và-cấu-hình)
+5. [Tài khoản mặc định](#tài-khoản-mặc-định)
+6. [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
+7. [Phân quyền người dùng](#phân-quyền-người-dùng)
+8. [Cấu trúc dự án](#cấu-trúc-dự-án)
+9. [Cấu trúc Database](#cấu-trúc-database)
+10. [Khắc phục lỗi](#khắc-phục-lỗi)
+11. [Phát triển](#phát-triển)
+
+---
+
+## Giới thiệu
+
+Blue Moon Apartment Management System là phần mềm quản lý toàn diện cho Ban quản trị chung cư, hỗ trợ:
+
+- **Quản lý nhân khẩu**: Quản lý thông tin hộ gia đình và nhân khẩu trong chung cư
+- **Quản lý thu phí**: Theo dõi và quản lý thu phí dịch vụ, phí quản lý hàng tháng
+- **Quản lý người dùng**: Quản lý tài khoản và phân quyền truy cập hệ thống
+- **Quản lý chức năng**: Cấu hình các chức năng hệ thống và menu động
+- **Đóng tiền trực tuyến**: Người dùng có thể đóng phí trực tiếp qua hệ thống
+
+---
+
+## Tính năng chính
+
+### ✅ Đã triển khai
+
+#### 1. Xác thực và Bảo mật
+- **Đăng nhập (UC001)**: Đăng nhập bằng username/password
+- **Đăng ký (UC003)**: Đăng ký tài khoản mới với validation đầy đủ
+- **Quên mật khẩu**: Gửi email đặt lại mật khẩu với token có thời hạn 24 giờ
+- **Đổi mật khẩu bắt buộc**: Admin có thể yêu cầu user đổi mật khẩu (ngay lập tức, tại ngày cụ thể, hoặc định kỳ)
+- **Session Management**: Quản lý phiên đăng nhập với thời hạn 8 giờ
+- **Password Hashing**: Mật khẩu được hash bằng BCrypt
+
+#### 2. Quản lý Người dùng
+- **Tìm kiếm người dùng (UC004)**: Tìm kiếm theo username, email, họ tên, số điện thoại
+- **Quản lý người dùng (UC006)**: 
+  - Vô hiệu hóa/kích hoạt tài khoản
+  - Yêu cầu đổi mật khẩu
+  - Thiết lập định kỳ đổi mật khẩu
+- **Phân quyền**: Hệ thống phân quyền linh hoạt theo nhóm người dùng
+
+#### 3. Quản lý Chức năng
+- **CRUD chức năng (UC005)**: Thêm, sửa, xóa chức năng hệ thống
+- **Quản lý nhóm chức năng**: Tổ chức chức năng theo nhóm
+- **Validation**: Kiểm tra đầy đủ khi tạo/sửa chức năng
+
+#### 4. Quản lý Nhân khẩu
+- **Xem danh sách nhân khẩu**: Hiển thị tất cả nhân khẩu (chỉ chủ hộ)
+- **Tìm kiếm**: Tìm kiếm theo tên, mã căn hộ, mã hộ dân
+- **Thông tin chi tiết**: Hiển thị đầy đủ thông tin nhân khẩu
+- **Đăng ký thông tin cá nhân**: Người dùng có thể đăng ký/cập nhật thông tin cá nhân
+
+#### 5. Quản lý Thu phí
+- **Xem danh sách thu phí**: Hiển thị tất cả khoản thu phí
+- **Tìm kiếm**: Tìm kiếm theo nhiều tiêu chí (tên chủ hộ, mã căn hộ, mã hộ dân, tháng/năm, trạng thái)
+- **Thống kê**: Thống kê tổng số khoản phí, đã thu, chưa thu
+- **Trạng thái thanh toán**: Hỗ trợ 4 trạng thái: chưa đóng, đã đóng, đóng một phần, đóng thừa
+- **Đồng bộ dữ liệu**: Tự động đồng bộ giữa nhân khẩu và thu phí
+
+#### 6. Đóng tiền (Cho người dùng)
+- **Xem khoản phí cần đóng**: Hiển thị danh sách các khoản phí chưa đóng
+- **Đóng tiền**: Người dùng có thể đóng phí trực tiếp qua hệ thống
+- **Hỗ trợ nhiều phương thức thanh toán**: Tiền mặt, chuyển khoản, thẻ tín dụng
+- **Xử lý thanh toán**: Hỗ trợ đóng đủ, đóng một phần, đóng thừa
+
+#### 7. Thông tin Cá nhân
+- **Đăng ký thông tin**: Người dùng có thể đăng ký thông tin cá nhân lần đầu
+- **Cập nhật thông tin**: Cập nhật thông tin cá nhân đã có
+- **Tự động tạo fee collection**: Khi đăng ký thông tin, hệ thống tự động tạo fee collection cho tháng hiện tại
+
+### ⚠️ Đang phát triển
+
+- **Tạo menu (UC002)**: Tạo menu động cho hệ thống
 
 ---
 
 ## Yêu cầu hệ thống
 
-- **Java:** 11 hoặc cao hơn
+- **Java:** JDK 11 hoặc cao hơn
 - **Database:** PostgreSQL 12+ (khuyến nghị) hoặc MySQL 8.0+
 - **Build tool:** Maven 3.6+
-- **UI Framework:** JavaFX
+- **UI Framework:** JavaFX 17.0.2
+- **Hệ điều hành:** Windows, Linux, macOS
 
 ---
 
@@ -56,11 +126,11 @@ CREATE DATABASE blue_moon WITH ENCODING 'UTF8';
 
 1. Mở pgAdmin hoặc psql
 2. Kết nối với database `blue_moon`
-3. Chạy file: `src/main/resources/sql/schema-postgresql.sql`
+3. Chạy file: `blue-moon-app/src/main/resources/sql/schema-postgresql.sql`
 
 **Bước 3: Chạy Seed Data**
 
-Chạy file: `src/main/resources/sql/seed-postgresql.sql`
+Chạy file: `blue-moon-app/src/main/resources/sql/seed-postgresql.sql`
 
 **Lưu ý:** File seed đã bao gồm:
 - Dữ liệu mặc định (chức năng, nhóm, admin user)
@@ -78,18 +148,18 @@ CREATE DATABASE blue_moon CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 **Bước 2: Chạy Schema**
 
 ```bash
-mysql -u root -p blue_moon < src/main/resources/sql/schema.sql
+mysql -u root -p blue_moon < blue-moon-app/src/main/resources/sql/schema.sql
 ```
 
 **Bước 3: Chạy Seed Data**
 
 ```bash
-mysql -u root -p blue_moon < src/main/resources/sql/seed.sql
+mysql -u root -p blue_moon < blue-moon-app/src/main/resources/sql/seed.sql
 ```
 
 ### 2. Cấu hình application.properties
 
-Chỉnh sửa file `src/main/resources/application.properties`:
+Chỉnh sửa file `blue-moon-app/src/main/resources/application.properties`:
 
 ```properties
 # Database Configuration
@@ -112,6 +182,10 @@ email.smtp.auth=true
 email.smtp.starttls.enable=true
 email.from=your_email@gmail.com
 email.from.password=your_email_password
+
+# Security Configuration
+password.reset.token.expiry.hours=24
+session.expiry.hours=8
 ```
 
 ### 3. Build và chạy
@@ -140,49 +214,53 @@ Sau khi chạy seed data:
 
 ---
 
-## Tính năng
+## Hướng dẫn sử dụng
 
-### Đã triển khai
+### Đăng nhập
 
-1. **Đăng nhập (UC001)**
-   - Đăng nhập bằng username/password
-   - Đăng nhập bằng Facebook (cần cấu hình)
+1. Mở ứng dụng
+2. Nhập username và password
+3. Click "Đăng nhập"
+4. Nếu có yêu cầu đổi mật khẩu, hệ thống sẽ hiển thị dialog yêu cầu đổi mật khẩu
 
-2. **Đăng ký (UC003)**
-   - Đăng ký tài khoản mới
-   - Validation đầy đủ
+### Quản lý Nhân khẩu (Admin)
 
-3. **Quên mật khẩu**
-   - Gửi email đặt lại mật khẩu
-   - Token có thời hạn 24 giờ
+1. Vào menu **Nhân khẩu** → **Quản lý nhân khẩu**
+2. Sử dụng thanh tìm kiếm để tìm nhân khẩu theo:
+   - Tên nhân khẩu
+   - Mã căn hộ
+   - Mã hộ dân
+3. Click "Làm mới" để xem tất cả nhân khẩu
 
-4. **Tìm kiếm người dùng (UC004)**
-   - Tìm kiếm theo username, email, họ tên, số điện thoại
-   - Hiển thị danh sách kết quả
+### Quản lý Thu phí (Admin/Kế toán)
 
-5. **Quản lý người dùng**
-   - Vô hiệu hóa/kích hoạt tài khoản
-   - Yêu cầu đổi mật khẩu
+1. Vào menu **Thu phí** → **Quản lý thu phí**
+2. Sử dụng thanh tìm kiếm để tìm khoản phí theo:
+   - Tên chủ hộ
+   - Mã căn hộ
+   - Mã hộ dân
+   - Tháng/Năm
+   - Trạng thái (chưa đóng, đã đóng, đóng một phần, đóng thừa)
+3. Xem thống kê ở phía dưới bảng
 
-6. **CRUD chức năng (UC005)**
-   - Thêm, sửa, xóa chức năng
-   - Quản lý nhóm chức năng
-   - Validation đầy đủ
+### Đóng tiền (Người dùng)
 
-7. **Quản lý nhân khẩu**
-   - Xem danh sách nhân khẩu
-   - Tìm kiếm theo tên, mã căn hộ, mã hộ dân
-   - Hiển thị thông tin chi tiết
+1. Vào menu **Cá nhân** → **Đóng tiền**
+2. Xem danh sách các khoản phí cần đóng
+3. Chọn khoản phí và nhập số tiền đóng
+4. Chọn phương thức thanh toán
+5. Click "Xác nhận thanh toán"
 
-8. **Quản lý thu phí**
-   - Xem danh sách thu phí
-   - Tìm kiếm theo nhiều tiêu chí
-   - Đánh dấu đã thu phí
-   - Thống kê thu phí
+### Thông tin Cá nhân (Người dùng)
 
-### Chưa hoàn thiện
+1. Vào menu **Cá nhân** → **Thông tin cá nhân**
+2. Điền thông tin cá nhân (nếu chưa đăng ký)
+3. Hoặc cập nhật thông tin (nếu đã có)
+4. Click "Lưu"
 
-- **Tạo menu (UC002)** - UI đang được phát triển
+**Lưu ý:** 
+- Khi đăng ký thông tin lần đầu, hệ thống sẽ tự động tạo fee collection cho tháng hiện tại
+- Chỉ có thể đăng ký với vai trò "Chủ hộ"
 
 ---
 
@@ -210,6 +288,8 @@ Sau khi chạy seed data:
 | Tạo menu | - | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Quản lý nhân khẩu | - | ❌ | ✅ | ✅ | ❌ | ✅ |
 | Quản lý thu phí | - | ❌ | ✅ | ❌ | ✅ | ❌ |
+| Thông tin cá nhân | - | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Đóng tiền | - | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 *Người dùng chỉ có quyền nếu được phân quyền qua nhóm (group).
 
@@ -230,153 +310,161 @@ blue-moon-app/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── vn/bluemoon/
-│   │   │       ├── App.java                    # Main class
+│   │   │       ├── App.java                    # Main class - Entry point
 │   │   │       ├── config/                     # Cấu hình
+│   │   │       │   ├── AppConfig.java          # Cấu hình ứng dụng
+│   │   │       │   └── DbConfig.java           # Cấu hình database
 │   │   │       ├── controller/                 # Controllers (legacy)
-│   │   │       ├── exception/                   # Exception classes
+│   │   │       ├── exception/                  # Exception classes
+│   │   │       │   ├── AppException.java
+│   │   │       │   ├── AuthException.java
+│   │   │       │   └── DbException.java
 │   │   │       ├── model/
 │   │   │       │   ├── dto/                     # Data Transfer Objects
+│   │   │       │   │   ├── FunctionUpsertRequest.java
+│   │   │       │   │   ├── LoginRequest.java
+│   │   │       │   │   ├── PersonalInfoRequest.java
+│   │   │       │   │   ├── RegisterRequest.java
+│   │   │       │   │   └── UserSearchRequest.java
 │   │   │       │   └── entity/                  # Entity classes
+│   │   │       │       ├── FeeCollection.java
+│   │   │       │       ├── Function.java
+│   │   │       │       ├── FunctionGroup.java
+│   │   │       │       ├── Group.java
+│   │   │       │       ├── Menu.java
+│   │   │       │       ├── PasswordResetToken.java
+│   │   │       │       ├── Resident.java
+│   │   │       │       ├── Role.java
+│   │   │       │       └── User.java
 │   │   │       ├── repository/                  # Data access layer
+│   │   │       │   ├── FeeCollectionRepository.java
+│   │   │       │   ├── FunctionGroupRepository.java
+│   │   │       │   ├── FunctionRepository.java
+│   │   │       │   ├── GroupRepository.java
+│   │   │       │   ├── MenuRepository.java
+│   │   │       │   ├── ResidentRepository.java
+│   │   │       │   ├── RoleRepository.java
+│   │   │       │   ├── TokenRepository.java
+│   │   │       │   └── UserRepository.java
 │   │   │       ├── security/                   # Security và authorization
+│   │   │       │   ├── Authorization.java
+│   │   │       │   ├── PasswordHasher.java
+│   │   │       │   └── SessionManager.java
 │   │   │       ├── service/                     # Business logic
-│   │   │       ├── ui/                          # JavaFX UI
+│   │   │       │   ├── AuthService.java
+│   │   │       │   ├── FeeCollectionService.java
+│   │   │       │   ├── FunctionService.java
+│   │   │       │   ├── MenuService.java
+│   │   │       │   ├── PasswordChangeService.java
+│   │   │       │   ├── PasswordResetService.java
+│   │   │       │   ├── PaymentService.java
+│   │   │       │   ├── PersonalInfoService.java
+│   │   │       │   ├── ResidentService.java
+│   │   │       │   ├── RoleGroupService.java
+│   │   │       │   └── UserService.java
+│   │   │       ├── ui/                          # JavaFX UI Controllers
+│   │   │       │   ├── dialog/
+│   │   │       │   │   └── ChangePasswordDialog.java
+│   │   │       │   ├── fee/
+│   │   │       │   │   └── FeeCollectionController.java
+│   │   │       │   ├── function/
+│   │   │       │   │   ├── FunctionDialogController.java
+│   │   │       │   │   └── FunctionManagementController.java
+│   │   │       │   ├── login/
+│   │   │       │   │   └── LoginController.java
+│   │   │       │   ├── main/
+│   │   │       │   │   └── MainController.java
+│   │   │       │   ├── payment/
+│   │   │       │   │   └── PaymentController.java
+│   │   │       │   ├── personal/
+│   │   │       │   │   └── PersonalInfoController.java
+│   │   │       │   ├── register/
+│   │   │       │   │   └── RegisterController.java
+│   │   │       │   ├── resident/
+│   │   │       │   │   └── ResidentManagementController.java
+│   │   │       │   └── user/
+│   │   │       │       └── UserManagementController.java
 │   │   │       ├── util/                        # Utilities
+│   │   │       │   ├── AppLogger.java
+│   │   │       │   ├── DatabaseInitializer.java
+│   │   │       │   ├── EmailSender.java
+│   │   │       │   ├── ErrorDialog.java
+│   │   │       │   ├── JdbcUtils.java
+│   │   │       │   ├── PasswordHasher.java
+│   │   │       │   └── TokenGenerator.java
 │   │   │       └── validation/                  # Validation
+│   │   │           ├── ValidationException.java
+│   │   │           └── Validators.java
 │   │   └── resources/
 │   │       ├── application.properties           # Cấu hình
+│   │       ├── css/
+│   │       │   └── styles.css                  # CSS styles
 │   │       ├── sql/
 │   │       │   ├── schema-postgresql.sql       # Schema PostgreSQL
 │   │       │   ├── schema.sql                  # Schema MySQL
 │   │       │   ├── seed-postgresql.sql         # Seed data PostgreSQL
 │   │       │   └── seed.sql                    # Seed data MySQL
 │   │       └── ui/                              # FXML files
+│   │           ├── dialog/
+│   │           │   └── ChangePasswordDialog.fxml
+│   │           ├── fee/
+│   │           │   └── FeeCollectionView.fxml
+│   │           ├── function/
+│   │           │   ├── FunctionDialogView.fxml
+│   │           │   └── FunctionManagementView.fxml
+│   │           ├── login/
+│   │           │   └── LoginView.fxml
+│   │           ├── main/
+│   │           │   └── MainView.fxml
+│   │           ├── payment/
+│   │           │   └── PaymentView.fxml
+│   │           ├── personal/
+│   │           │   └── PersonalInfoView.fxml
+│   │           ├── register/
+│   │           │   └── RegisterView.fxml
+│   │           ├── resident/
+│   │           │   └── ResidentManagementView.fxml
+│   │           └── user/
+│   │               └── UserManagementView.fxml
 │   └── test/
 └── pom.xml
 ```
 
 ---
 
-## Tài liệu SRS
+## Cấu trúc Database
 
-### Tổng quan
+### Core Tables (Bảng cốt lõi)
 
-Phần mềm hỗ trợ Ban quản trị chung cư Blue Moon quản lý:
-- Thông tin hộ gia đình và nhân khẩu
-- Thu phí dịch vụ, phí quản lý
-- Người dùng hệ thống và phân quyền
-- Chức năng hệ thống và menu động
+- **`users`**: Quản lý người dùng
+  - Hỗ trợ đổi mật khẩu bắt buộc (ngay lập tức, tại ngày cụ thể, định kỳ)
+  - Lưu ngày đổi mật khẩu lần cuối
+  
+- **`groups`**: Quản lý nhóm người dùng
+- **`user_roles`**: Quan hệ nhiều-nhiều giữa users và groups
+- **`function_groups`**: Nhóm chức năng
+- **`functions`**: Chức năng hệ thống
+- **`group_functions`**: Quan hệ nhiều-nhiều giữa groups và functions
+- **`menus`**: Menu động
+- **`sessions`**: Session người dùng
+- **`password_reset_tokens`**: Token đặt lại mật khẩu
 
-### Các Use Case chính
+### Household Tables (Bảng quản lý hộ dân)
 
-1. **UC001 - Đăng nhập**: Đăng nhập vào hệ thống bằng username/password
-2. **UC002 - Tạo menu**: Tạo menu động cho hệ thống (đang phát triển)
-3. **UC003 - Đăng ký**: Đăng ký tài khoản mới
-4. **UC004 - Tìm kiếm người dùng**: Tìm kiếm người dùng theo nhiều tiêu chí
-5. **UC005 - CRUD chức năng**: Quản lý các chức năng hệ thống
-6. **UC006 - Quản lý người dùng**: Vô hiệu hóa/kích hoạt tài khoản
-7. **UC007 - Quản lý nhân khẩu**: Xem và tìm kiếm thông tin nhân khẩu
-8. **UC008 - Quản lý thu phí**: Quản lý thu phí hàng tháng
+- **`apartments`**: Căn hộ
+- **`households`**: Hộ dân
+- **`residents`**: Nhân khẩu
+  - Liên kết với `users` qua `user_id` (nullable)
+  - Chỉ hiển thị chủ hộ (relationship = 'Chủ hộ') trong quản lý
 
-### Cấu trúc Database
+### Fee Collection Tables (Bảng quản lý thu phí)
 
-**Core Tables:**
-- `users`: Quản lý người dùng
-- `groups`: Quản lý nhóm người dùng
-- `user_roles`: Quan hệ nhiều-nhiều giữa users và groups
-- `function_groups`: Nhóm chức năng
-- `functions`: Chức năng hệ thống
-- `group_functions`: Quan hệ nhiều-nhiều giữa groups và functions
-- `menus`: Menu động
-- `sessions`: Session người dùng
-- `password_reset_tokens`: Token đặt lại mật khẩu
-
-**Household Tables:**
-- `apartments`: Căn hộ
-- `households`: Hộ dân
-- `residents`: Nhân khẩu
-
-**Fee Collection Tables:**
-- `fee_collections`: Thu phí
-- `fee_types`: Loại phí
-- `fee_collection_details`: Chi tiết các loại phí
-
-### Yêu cầu kỹ thuật
-
-- **Công nghệ:** Java 11+, JavaFX
-- **Database:** PostgreSQL 12+ (hoặc MySQL 8.0+)
-- **Build tool:** Maven 3.6+
-- **Kiến trúc:** 3-layer (Presentation, Business Logic, Data Access)
-
-### Yêu cầu giao diện
-
-- **Font:** Arial 14px, màu đen
-- **Nền:** Trắng
-- **Căn lề:** Số căn phải, chữ căn trái
-- **Thông báo lỗi:** Rõ ràng, cụ thể
-
-### Yêu cầu bảo mật
-
-- Mật khẩu được hash bằng BCrypt
-- Session có thời hạn (8 giờ)
-- Kiểm tra quyền truy cập cho mọi chức năng
-- Thông tin nhạy cảm không được hiển thị trong log
-
----
-
-## Báo cáo kiểm tra project
-
-### Trạng thái tổng thể
-
-✅ **Project đang ở trạng thái tốt và sẵn sàng sử dụng**
-
-### Kiểm tra Code
-
-✅ **Không có lỗi compile nghiêm trọng**
-
-⚠️ **Warnings (không ảnh hưởng):**
-- Unused imports trong một số Repository files
-- JRE version mismatch (compile với Java 11, chạy với Java 21) - không ảnh hưởng
-
-✅ **Kiến trúc 3-layer:** Tốt
-✅ **Separation of Concerns:** Tốt
-✅ **Naming Convention:** Tuân thủ Java conventions
-✅ **Package Structure:** Rõ ràng, dễ hiểu
-
-### Kiểm tra Chức năng
-
-| STT | Chức năng | Trạng thái |
-|-----|-----------|------------|
-| 1 | Đăng nhập (UC001) | ✅ Hoàn thành |
-| 2 | Đăng ký (UC003) | ✅ Hoàn thành |
-| 3 | Quên mật khẩu | ✅ Hoàn thành |
-| 4 | Tìm kiếm người dùng (UC004) | ✅ Hoàn thành |
-| 5 | Quản lý người dùng | ✅ Hoàn thành |
-| 6 | CRUD chức năng (UC005) | ✅ Hoàn thành |
-| 7 | Quản lý nhân khẩu | ✅ Hoàn thành |
-| 8 | Quản lý thu phí | ✅ Hoàn thành |
-| 9 | Tạo menu (UC002) | ⚠️ Đang phát triển |
-
-### Kiểm tra Database
-
-✅ **Schema:** Đầy đủ, tất cả bảng đã được định nghĩa
-✅ **Seed Data:** Đầy đủ, phân quyền đúng theo SRS
-
-### Đánh giá tổng thể
-
-**Điểm mạnh:**
-- ✅ Kiến trúc code rõ ràng, dễ bảo trì
-- ✅ Phân quyền đúng với SRS
-- ✅ Database schema đầy đủ
-- ✅ UI/UX nhất quán
-- ✅ Error handling tốt
-- ✅ Validation đầy đủ
-
-**Điểm cần cải thiện:**
-- ⚠️ Một số unused imports
-- ⚠️ Chức năng "Tạo menu" chưa hoàn thiện
-
-**Kết luận:** ✅ **Project sẵn sàng để sử dụng và demo**
+- **`fee_collections`**: Thu phí
+  - Hỗ trợ 4 trạng thái: `unpaid`, `paid`, `partial_paid`, `overpaid`
+  - Lưu số tiền đã nộp (`paid_amount`)
+  - Tự động đồng bộ với nhân khẩu
+  
+- **`fee_types`**: Loại phí
 
 ---
 
@@ -413,48 +501,13 @@ Chạy lại file schema:
 - PostgreSQL: `schema-postgresql.sql`
 - MySQL: `schema.sql`
 
-### Lỗi: "Permission denied"
-
-- Đảm bảo user có quyền tạo database và bảng
-- Hoặc chạy schema thủ công
-
-### Lỗi: "Password authentication failed"
-
-- Kiểm tra lại password trong `application.properties`
-- Đảm bảo password đúng với database
-
-### Lỗi: "Cannot login with admin account"
-
-- Kiểm tra user admin đã được tạo chưa (chạy seed data)
-- Mật khẩu mặc định: `admin123`
-- **Lưu ý:** Chỉ nhập mật khẩu gốc, không nhập hash!
-
-### Lỗi encoding trong psql
-
-Khi chạy SQL trong psql, set encoding:
-```sql
-SET client_encoding TO 'UTF8';
-```
-
 ### Lỗi: "The column name paid_amount..."
 
 **Nguyên nhân:** Cột `paid_amount` chưa được thêm vào bảng `fee_collections` trong database.
 
 **Cách sửa:**
 
-**Bước 1: Mở psql hoặc pgAdmin**
-
-**Cách A: Dùng psql (Command Line)**
-```powershell
-psql -U postgres -d blue_moon
-```
-
-**Cách B: Dùng pgAdmin**
-- Mở pgAdmin
-- Kết nối database `blue_moon`
-- Mở Query Tool (Tools → Query Tool hoặc click phải database → Query Tool)
-
-**Bước 2: Chạy lệnh SQL**
+Chạy lệnh SQL sau trong pgAdmin hoặc psql:
 
 ```sql
 -- Thêm cột paid_amount (nếu chưa có)
@@ -467,29 +520,88 @@ SET paid_amount = amount
 WHERE status = 'paid' AND paid_amount = 0;
 ```
 
-**Bước 3: Kiểm tra**
+**Lưu ý:** File `schema-postgresql.sql` đã bao gồm migration này ở cuối file, nên chỉ cần chạy lại schema nếu gặp lỗi này.
 
-Chạy lệnh sau để kiểm tra cột đã được thêm chưa:
+### Lỗi: "The column name password_change_required_date..."
+
+**Nguyên nhân:** Các cột quản lý đổi mật khẩu chưa được thêm vào bảng `users`.
+
+**Cách sửa:**
+
+Chạy lệnh SQL sau:
+
 ```sql
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'fee_collections' 
-AND column_name = 'paid_amount';
+-- Add password_change_required_date column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password_change_required_date DATE NULL;
+
+-- Add password_change_period_days column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS password_change_period_days INTEGER NULL;
+
+-- Add last_password_change_date column
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS last_password_change_date DATE NULL;
+
+-- Update existing users
+UPDATE users 
+SET last_password_change_date = DATE(created_at) 
+WHERE last_password_change_date IS NULL AND created_at IS NOT NULL;
 ```
 
-Nếu kết quả trả về 1 dòng, nghĩa là đã thành công.
+**Lưu ý:** File `schema-postgresql.sql` đã bao gồm migration này ở cuối file.
 
-**Bước 4: Khởi động lại ứng dụng**
+### Lỗi: "Cannot login with admin account"
 
-Sau khi chạy script, khởi động lại ứng dụng JavaFX:
-```powershell
-cd blue-moon-app
-mvn javafx:run
+- Kiểm tra user admin đã được tạo chưa (chạy seed data)
+- Mật khẩu mặc định: `admin123`
+- **Lưu ý:** Chỉ nhập mật khẩu gốc, không nhập hash!
+
+### Lỗi: "Permission denied"
+
+- Đảm bảo user có quyền tạo database và bảng
+- Hoặc chạy schema thủ công
+
+### Lỗi encoding trong psql
+
+Khi chạy SQL trong psql, set encoding:
+```sql
+SET client_encoding TO 'UTF8';
 ```
 
-**Lưu ý:**
-- Nếu gặp lỗi "column already exists", có nghĩa là cột đã được thêm rồi, bạn có thể bỏ qua.
-- Nếu gặp lỗi khác, vui lòng copy toàn bộ thông báo lỗi và gửi lại.
+---
+
+## Phát triển
+
+### Kiến trúc
+
+Dự án sử dụng kiến trúc 3-layer:
+
+1. **Presentation Layer (UI)**: JavaFX Controllers và FXML
+2. **Business Logic Layer (Service)**: Xử lý logic nghiệp vụ
+3. **Data Access Layer (Repository)**: Truy cập database
+
+### Công nghệ sử dụng
+
+- **Java 11+**: Ngôn ngữ lập trình
+- **JavaFX 17.0.2**: UI Framework
+- **Maven 3.6+**: Build tool
+- **PostgreSQL 12+**: Database (khuyến nghị)
+- **BCrypt**: Password hashing
+- **JavaMail**: Gửi email
+
+### Coding Standards
+
+- Tuân thủ Java naming conventions
+- Package structure rõ ràng
+- Separation of concerns
+- Error handling đầy đủ
+- Validation cho tất cả input
+
+### Tài liệu tham khảo
+
+- SRS Document v2.1 - Nhóm 24
+- File SRS: `blue-moon-app/docs/SRS.pdf`
 
 ---
 
@@ -499,14 +611,8 @@ mvn javafx:run
 - Cấu hình email đúng để sử dụng chức năng quên mật khẩu
 - Font mặc định: Arial 14px, màu đen, nền trắng (theo SRS)
 - Ứng dụng tự động tạo database và schema nếu chưa tồn tại (cần quyền admin)
-
----
-
-## Phát triển
-
-Dự án tuân thủ theo tài liệu SRS v2.1 - Nhóm 24
-
-**Tài liệu chi tiết:** Xem file `docs/SRS-UPDATED.md` (nếu có)
+- Khi đăng nhập, cửa sổ sẽ tự động hiển thị toàn màn hình
+- Khi đăng xuất, cửa sổ sẽ reset về kích thước bình thường
 
 ---
 
