@@ -225,19 +225,26 @@ CREATE INDEX IF NOT EXISTS idx_residents_status ON residents(status);
 CREATE TABLE IF NOT EXISTS fee_collections (
     id SERIAL PRIMARY KEY,
     household_id INT NOT NULL,
-    month INT NOT NULL CHECK (month >= 1 AND month <= 12),
-    year INT NOT NULL,
+    month INT, -- NULL cho thu phí không định kỳ
+    year INT, -- NULL cho thu phí không định kỳ
     amount DECIMAL(15, 2) NOT NULL DEFAULT 0,
     paid_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Số tiền đã nộp
     status VARCHAR(20) DEFAULT 'unpaid', -- unpaid, paid, partial_paid, overpaid
+    fee_type VARCHAR(20) DEFAULT 'periodic', -- periodic (định kỳ), non_periodic (không định kỳ)
+    reason TEXT, -- Lý do thu phí (chỉ cho thu phí không định kỳ)
     payment_date DATE,
     payment_method VARCHAR(50), -- cash, bank_transfer, credit_card
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
-    UNIQUE (household_id, month, year)
+    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE
 );
+
+-- Note: Removed unique constraint to allow multiple fee collections for same household/month/year
+-- This allows admin to add additional fees even if auto-created fee already exists
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_fee_collections_household_month_year 
+-- ON fee_collections(household_id, month, year) 
+-- WHERE month IS NOT NULL AND year IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_fee_collections_household_id ON fee_collections(household_id);
 CREATE INDEX IF NOT EXISTS idx_fee_collections_month_year ON fee_collections(year, month);
@@ -338,3 +345,24 @@ ADD COLUMN IF NOT EXISTS last_password_change_date DATE NULL;
 UPDATE users 
 SET last_password_change_date = DATE(created_at) 
 WHERE last_password_change_date IS NULL AND created_at IS NOT NULL;
+
+-- ============================================
+-- MIGRATION: Thêm các cột cho thu phí định kỳ/không định kỳ
+-- ============================================
+
+-- Add fee_type column
+ALTER TABLE fee_collections 
+ADD COLUMN IF NOT EXISTS fee_type VARCHAR(20) DEFAULT 'periodic';
+
+-- Add reason column
+ALTER TABLE fee_collections 
+ADD COLUMN IF NOT EXISTS reason TEXT;
+
+-- Update existing records: set fee_type to 'periodic' if null
+UPDATE fee_collections 
+SET fee_type = 'periodic' 
+WHERE fee_type IS NULL;
+
+-- Make month and year nullable (for non-periodic fees)
+-- Note: PostgreSQL doesn't support ALTER COLUMN to change NOT NULL to NULL easily
+-- This will be handled by application logic

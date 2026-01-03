@@ -14,6 +14,8 @@ public class FeeCollection {
     private BigDecimal amount;
     private BigDecimal paidAmount; // Số tiền đã nộp
     private String status; // unpaid, paid, partial_paid, overpaid
+    private String feeType; // periodic (định kỳ), non_periodic (không định kỳ)
+    private String reason; // Lý do thu phí (chỉ cho thu phí không định kỳ)
     private LocalDate paymentDate;
     private String paymentMethod;
     private String notes;
@@ -79,6 +81,22 @@ public class FeeCollection {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getFeeType() {
+        return feeType;
+    }
+
+    public void setFeeType(String feeType) {
+        this.feeType = feeType;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public LocalDate getPaymentDate() {
@@ -166,8 +184,19 @@ public class FeeCollection {
     }
     
     public String getMonthYearDisplay() {
-        if (month == null || year == null) return "";
+        if (month == null || year == null) {
+            return "Không định kỳ";
+        }
         return String.format("%02d/%d", month, year);
+    }
+    
+    public String getFeeTypeDisplay() {
+        if (feeType == null) return "Định kỳ";
+        switch (feeType.toLowerCase()) {
+            case "periodic": return "Định kỳ";
+            case "non_periodic": return "Không định kỳ";
+            default: return feeType;
+        }
     }
 }
 

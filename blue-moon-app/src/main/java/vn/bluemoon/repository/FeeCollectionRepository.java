@@ -19,17 +19,19 @@ public class FeeCollectionRepository {
      * Find all fee collections with household and apartment info
      * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
      * Đảm bảo mỗi household chỉ có 1 chủ hộ được hiển thị
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
      */
     public List<FeeCollection> findAll() throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
         String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
-                     "h.owner_name " +
+                     "COALESCE(r.full_name, h.owner_name) as owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
-                     "WHERE EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
+                     "WHERE EXISTS (SELECT 1 FROM residents r2 WHERE r2.household_id = h.id AND r2.relationship = 'Chủ hộ') " +
                      "ORDER BY fc.id, fc.year DESC, fc.month DESC, fc.created_at DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -48,19 +50,22 @@ public class FeeCollectionRepository {
     /**
      * Find fee collections by user ID (through resident)
      * CHỈ LẤY CÁC FEE_COLLECTIONS CỦA CHỦ HỘ
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
+     * Tìm trực tiếp qua household_id của resident có user_id
      */
     public List<FeeCollection> findByUserId(Integer userId) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
-        String sql = "SELECT fc.*, " +
+        // Query đơn giản hơn: Tìm fee collections của household mà user là chủ hộ
+        String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
-                     "h.owner_name " +
+                     "COALESCE(r.full_name, h.owner_name) as owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
-                     "JOIN residents r ON r.household_id = h.id " +
-                     "WHERE r.user_id = ? AND r.relationship = 'Chủ hộ' " +
-                     "ORDER BY fc.year DESC, fc.month DESC";
+                     "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
+                     "WHERE fc.household_id IN (SELECT household_id FROM residents WHERE user_id = ? AND relationship = 'Chủ hộ') " +
+                     "ORDER BY fc.id, fc.year DESC, fc.month DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -69,7 +74,43 @@ public class FeeCollectionRepository {
             while (rs.next()) {
                 fees.add(mapResultSetToFeeCollection(rs));
             }
+            
+            // Debug log
+            System.out.println("Query fee collections for user ID: " + userId);
+            System.out.println("Found " + fees.size() + " fee collections");
+            if (fees.size() > 0) {
+                System.out.println("First fee: household_id=" + fees.get(0).getHouseholdId() + 
+                                 ", month=" + fees.get(0).getMonth() + 
+                                 ", year=" + fees.get(0).getYear() + 
+                                 ", status=" + fees.get(0).getStatus());
+            } else {
+                System.out.println("No fee collections found. Checking if user has resident record...");
+                // Kiểm tra xem user có resident record không
+                String checkResidentSql = "SELECT household_id FROM residents WHERE user_id = ? AND relationship = 'Chủ hộ'";
+                try (PreparedStatement checkStmt = conn.prepareStatement(checkResidentSql)) {
+                    checkStmt.setInt(1, userId);
+                    ResultSet checkRs = checkStmt.executeQuery();
+                    if (checkRs.next()) {
+                        int householdId = checkRs.getInt("household_id");
+                        System.out.println("User has resident record with household_id: " + householdId);
+                        // Kiểm tra xem có fee collections nào cho household này không
+                        String checkFeeSql = "SELECT COUNT(*) FROM fee_collections WHERE household_id = ?";
+                        try (PreparedStatement feeStmt = conn.prepareStatement(checkFeeSql)) {
+                            feeStmt.setInt(1, householdId);
+                            ResultSet feeRs = feeStmt.executeQuery();
+                            if (feeRs.next()) {
+                                int feeCount = feeRs.getInt(1);
+                                System.out.println("Found " + feeCount + " fee collections for household " + householdId);
+                            }
+                        }
+                    } else {
+                        System.out.println("User does NOT have resident record with relationship = 'Chủ hộ'");
+                    }
+                }
+            }
         } catch (SQLException e) {
+            System.err.println("Error in findByUserId query: " + e.getMessage());
+            e.printStackTrace();
             throw new DbException("Error finding fee collections by user: " + e.getMessage(), e);
         }
         return fees;
@@ -77,15 +118,17 @@ public class FeeCollectionRepository {
     
     /**
      * Find fee collection by ID
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
      */
     public FeeCollection findById(Integer id) throws DbException {
         String sql = "SELECT fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
-                     "h.owner_name " +
+                     "COALESCE(r.full_name, h.owner_name) as owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
+                     "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
                      "WHERE fc.id = ?";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -104,18 +147,20 @@ public class FeeCollectionRepository {
     /**
      * Find fee collections by household ID
      * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
      */
     public List<FeeCollection> findByHouseholdId(Integer householdId) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
         String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
-                     "h.owner_name " +
+                     "COALESCE(r.full_name, h.owner_name) as owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
+                     "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
                      "WHERE fc.household_id = ? " +
-                     "AND EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "AND EXISTS (SELECT 1 FROM residents r2 WHERE r2.household_id = h.id AND r2.relationship = 'Chủ hộ') " +
                      "ORDER BY fc.id, fc.year DESC, fc.month DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -134,18 +179,20 @@ public class FeeCollectionRepository {
     /**
      * Find fee collection by month and year
      * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
      */
     public List<FeeCollection> findByMonthYear(Integer month, Integer year) throws DbException {
         List<FeeCollection> fees = new ArrayList<>();
         String sql = "SELECT DISTINCT ON (fc.id) fc.*, " +
                      "a.apartment_code, " +
                      "h.household_code, " +
-                     "h.owner_name " +
+                     "COALESCE(r.full_name, h.owner_name) as owner_name " +
                      "FROM fee_collections fc " +
                      "JOIN households h ON fc.household_id = h.id " +
                      "JOIN apartments a ON h.apartment_id = a.id " +
+                     "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
                      "WHERE fc.month = ? AND fc.year = ? " +
-                     "AND EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ') " +
+                     "AND EXISTS (SELECT 1 FROM residents r2 WHERE r2.household_id = h.id AND r2.relationship = 'Chủ hộ') " +
                      "ORDER BY fc.id, fc.created_at DESC";
         
         try (Connection conn = JdbcUtils.getConnection();
@@ -166,6 +213,7 @@ public class FeeCollectionRepository {
      * Search fee collections
      * CHỈ LẤY CÁC HỘ CÓ CHỦ HỘ (relationship = 'Chủ hộ')
      * Đảm bảo mỗi household chỉ có 1 chủ hộ được hiển thị
+     * Lấy owner_name từ residents table để đảm bảo đồng bộ
      */
     public List<FeeCollection> search(String apartmentCode, String householdCode, String ownerName, 
                                       Integer month, Integer year, String status) throws DbException {
@@ -174,20 +222,20 @@ public class FeeCollectionRepository {
             "SELECT DISTINCT ON (fc.id) fc.*, " +
             "a.apartment_code, " +
             "h.household_code, " +
-            "h.owner_name " +
+            "COALESCE(r.full_name, h.owner_name) as owner_name " +
             "FROM fee_collections fc " +
             "JOIN households h ON fc.household_id = h.id " +
             "JOIN apartments a ON h.apartment_id = a.id " +
-            "WHERE EXISTS (SELECT 1 FROM residents r WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ'"
+            "INNER JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
+            "WHERE 1=1"
         );
         List<Object> params = new ArrayList<>();
         
-        // Thêm điều kiện tìm kiếm theo tên chủ hộ vào EXISTS subquery
+        // Thêm điều kiện tìm kiếm theo tên chủ hộ - filter trực tiếp trên JOIN
         if (ownerName != null && !ownerName.trim().isEmpty()) {
             sql.append(" AND r.full_name ILIKE ?");
             params.add("%" + ownerName.trim() + "%");
         }
-        sql.append(")");
         
         // Các điều kiện tìm kiếm khác
         if (apartmentCode != null && !apartmentCode.trim().isEmpty()) {
@@ -234,27 +282,55 @@ public class FeeCollectionRepository {
      * Create fee collection
      */
     public FeeCollection create(FeeCollection fee) throws DbException {
-        String sql = "INSERT INTO fee_collections (household_id, month, year, amount, paid_amount, status, " +
-                     "payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                     "RETURNING id";
+        // Kiểm tra xem database có các cột mới chưa
+        boolean hasFeeTypeColumn = checkColumnExists("fee_collections", "fee_type");
+        
+        String sql;
+        if (hasFeeTypeColumn) {
+            sql = "INSERT INTO fee_collections (household_id, month, year, amount, paid_amount, status, " +
+                  "fee_type, reason, payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                  "RETURNING id";
+        } else {
+            // Fallback cho database cũ chưa có fee_type và reason
+            sql = "INSERT INTO fee_collections (household_id, month, year, amount, paid_amount, status, " +
+                  "payment_date, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                  "RETURNING id";
+        }
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, fee.getHouseholdId());
-            stmt.setInt(2, fee.getMonth());
-            stmt.setInt(3, fee.getYear());
-            stmt.setBigDecimal(4, fee.getAmount());
-            stmt.setBigDecimal(5, fee.getPaidAmount() != null ? fee.getPaidAmount() : BigDecimal.ZERO);
-            stmt.setString(6, fee.getStatus());
             
-            if (fee.getPaymentDate() != null) {
-                stmt.setDate(7, Date.valueOf(fee.getPaymentDate()));
+            if (fee.getMonth() != null) {
+                stmt.setInt(2, fee.getMonth());
             } else {
-                stmt.setNull(7, Types.DATE);
+                stmt.setNull(2, Types.INTEGER);
             }
             
-            stmt.setString(8, fee.getPaymentMethod());
-            stmt.setString(9, fee.getNotes());
+            if (fee.getYear() != null) {
+                stmt.setInt(3, fee.getYear());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+            
+            stmt.setBigDecimal(4, fee.getAmount());
+            stmt.setBigDecimal(5, fee.getPaidAmount() != null ? fee.getPaidAmount() : BigDecimal.ZERO);
+            stmt.setString(6, fee.getStatus() != null ? fee.getStatus() : "unpaid");
+            
+            int paramIndex = 7;
+            if (hasFeeTypeColumn) {
+                stmt.setString(paramIndex++, fee.getFeeType() != null ? fee.getFeeType() : "periodic");
+                stmt.setString(paramIndex++, fee.getReason());
+            }
+            
+            if (fee.getPaymentDate() != null) {
+                stmt.setDate(paramIndex++, Date.valueOf(fee.getPaymentDate()));
+            } else {
+                stmt.setNull(paramIndex++, Types.DATE);
+            }
+            
+            stmt.setString(paramIndex++, fee.getPaymentMethod());
+            stmt.setString(paramIndex++, fee.getNotes());
             
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -267,27 +343,50 @@ public class FeeCollectionRepository {
     }
     
     /**
+     * Kiểm tra xem cột có tồn tại trong bảng không
+     */
+    private boolean checkColumnExists(String tableName, String columnName) {
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT COUNT(*) FROM information_schema.columns " +
+                 "WHERE table_name = ? AND column_name = ?")) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, columnName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            // Nếu không kiểm tra được, giả sử cột không tồn tại
+            return false;
+        }
+        return false;
+    }
+    
+    /**
      * Update fee collection
      */
     public void update(FeeCollection fee) throws DbException {
-        String sql = "UPDATE fee_collections SET amount = ?, paid_amount = ?, status = ?, payment_date = ?, " +
-                     "payment_method = ?, notes = ? WHERE id = ?";
+        String sql = "UPDATE fee_collections SET amount = ?, paid_amount = ?, status = ?, fee_type = ?, reason = ?, " +
+                     "payment_date = ?, payment_method = ?, notes = ? WHERE id = ?";
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1, fee.getAmount());
             stmt.setBigDecimal(2, fee.getPaidAmount() != null ? fee.getPaidAmount() : BigDecimal.ZERO);
             stmt.setString(3, fee.getStatus());
+            stmt.setString(4, fee.getFeeType() != null ? fee.getFeeType() : "periodic");
+            stmt.setString(5, fee.getReason());
             
             if (fee.getPaymentDate() != null) {
-                stmt.setDate(4, Date.valueOf(fee.getPaymentDate()));
+                stmt.setDate(6, Date.valueOf(fee.getPaymentDate()));
             } else {
-                stmt.setNull(4, Types.DATE);
+                stmt.setNull(6, Types.DATE);
             }
             
-            stmt.setString(5, fee.getPaymentMethod());
-            stmt.setString(6, fee.getNotes());
-            stmt.setInt(7, fee.getId());
+            stmt.setString(7, fee.getPaymentMethod());
+            stmt.setString(8, fee.getNotes());
+            stmt.setInt(9, fee.getId());
             
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -313,12 +412,36 @@ public class FeeCollectionRepository {
         }
     }
     
+    /**
+     * Delete all fee collections for a household
+     */
+    public void deleteByHouseholdId(Integer householdId) throws DbException {
+        String sql = "DELETE FROM fee_collections WHERE household_id = ?";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, householdId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbException("Error deleting fee collections by household: " + e.getMessage(), e);
+        }
+    }
+    
     private FeeCollection mapResultSetToFeeCollection(ResultSet rs) throws SQLException {
         FeeCollection fee = new FeeCollection();
         fee.setId(rs.getInt("id"));
         fee.setHouseholdId(rs.getInt("household_id"));
-        fee.setMonth(rs.getInt("month"));
-        fee.setYear(rs.getInt("year"));
+        
+        // Month và year có thể NULL cho thu phí không định kỳ
+        int month = rs.getInt("month");
+        if (!rs.wasNull()) {
+            fee.setMonth(month);
+        }
+        
+        int year = rs.getInt("year");
+        if (!rs.wasNull()) {
+            fee.setYear(year);
+        }
         
         BigDecimal amount = rs.getBigDecimal("amount");
         fee.setAmount(amount != null ? amount : BigDecimal.ZERO);
@@ -327,6 +450,21 @@ public class FeeCollectionRepository {
         fee.setPaidAmount(paidAmount != null ? paidAmount : BigDecimal.ZERO);
         
         fee.setStatus(rs.getString("status"));
+        
+        // Fee type và reason
+        try {
+            fee.setFeeType(rs.getString("fee_type"));
+        } catch (SQLException e) {
+            // Column might not exist in older databases
+            fee.setFeeType("periodic");
+        }
+        
+        try {
+            fee.setReason(rs.getString("reason"));
+        } catch (SQLException e) {
+            // Column might not exist in older databases
+            fee.setReason(null);
+        }
         
         Date paymentDate = rs.getDate("payment_date");
         if (paymentDate != null) {

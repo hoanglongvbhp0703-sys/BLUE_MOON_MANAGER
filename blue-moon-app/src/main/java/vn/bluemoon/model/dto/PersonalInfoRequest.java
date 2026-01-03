@@ -18,6 +18,7 @@ public class PersonalInfoRequest {
     private String apartmentCode;  // Mã căn hộ (nếu có)
     private String householdCode;   // Mã hộ dân (nếu có)
     private String relationship;    // Quan hệ trong hộ (Chủ hộ, Vợ, Chồng, Con trai, Con gái, ...)
+    private String status;          // Trạng thái cư trú (active, temporary_resident, temporary_absent)
 
     public String getFullName() {
         return fullName;
@@ -113,6 +114,14 @@ public class PersonalInfoRequest {
 
     public void setRelationship(String relationship) {
         this.relationship = relationship;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

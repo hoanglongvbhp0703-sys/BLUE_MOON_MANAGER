@@ -66,6 +66,7 @@
                </font>
             </Label>
             <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="addFeeButton" text="➕ Thêm thu phí" onAction="#handleAddFee" styleClass="button-primary" />
             <Button fx:id="markPaidButton" text="✅ Đánh dấu đã thu phí" onAction="#handleMarkPaid" styleClass="button-success" />
          </children>
       </HBox>

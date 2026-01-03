@@ -50,6 +50,8 @@
                      
                      <TextArea fx:id="temporaryAddressArea" promptText="Địa chỉ tạm trú" prefRowCount="2" />
                      
+                     <ComboBox fx:id="statusComboBox" promptText="Trạng thái cư trú" />
+                     
                      <Separator styleClass="separator" />
                      
                      <Label text="Thông tin hộ dân (tùy chọn)" styleClass="form-section-title">

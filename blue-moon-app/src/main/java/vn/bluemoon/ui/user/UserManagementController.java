@@ -8,6 +8,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import vn.bluemoon.exception.DbException;
 import vn.bluemoon.model.dto.UserSearchRequest;
 import vn.bluemoon.model.entity.User;
+import vn.bluemoon.model.entity.Resident;
+import vn.bluemoon.repository.ResidentRepository;
 import vn.bluemoon.service.UserService;
 import vn.bluemoon.util.ErrorDialog;
 
@@ -62,6 +64,9 @@ public class UserManagementController {
     @FXML
     private Button requirePasswordChangeButton;
     
+    @FXML
+    private Button deleteButton;
+    
     private UserService userService = new UserService();
     private ObservableList<User> userList = FXCollections.observableArrayList();
     
@@ -77,10 +82,29 @@ public class UserManagementController {
         fullNameColumn.setCellValueFactory(new PropertyValueFactory<>("fullName"));
         phoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
         isActiveColumn.setCellValueFactory(param -> {
-            Boolean isActive = param.getValue().getIsActive();
-            return javafx.beans.binding.Bindings.createObjectBinding(() -> 
-                isActive != null && isActive ? "Hoạt động" : "Vô hiệu hóa"
-            );
+            User user = param.getValue();
+            Boolean isActive = user.getIsActive();
+            
+            // Kiểm tra xem user có resident record không
+            try {
+                Resident resident = new ResidentRepository().findByUserId(user.getId());
+                if (resident == null) {
+                    // User chưa đăng ký nơi ở
+                    return javafx.beans.binding.Bindings.createStringBinding(() -> 
+                        (isActive != null && isActive ? "Hoạt động" : "Vô hiệu hóa") + " - Chưa đăng ký nơi ở"
+                    );
+                } else {
+                    // User đã đăng ký nơi ở
+                    return javafx.beans.binding.Bindings.createStringBinding(() -> 
+                        isActive != null && isActive ? "Hoạt động" : "Vô hiệu hóa"
+                    );
+                }
+            } catch (DbException e) {
+                // Nếu có lỗi, chỉ hiển thị trạng thái active
+                return javafx.beans.binding.Bindings.createStringBinding(() -> 
+                    isActive != null && isActive ? "Hoạt động" : "Vô hiệu hóa"
+                );
+            }
         });
         
         userTable.setItems(userList);
@@ -168,7 +192,44 @@ public class UserManagementController {
             }
         }
     }
+    
+    @FXML
+    private void handleDelete() {
+        User selectedUser = userTable.getSelectionModel().getSelectedItem();
+        if (selectedUser == null) {
+            ErrorDialog.showError("Lỗi", "Vui lòng chọn một người dùng để xóa");
+            return;
+        }
+        
+        // Xác nhận xóa
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Xác nhận xóa");
+        confirmDialog.setHeaderText("Xóa người dùng");
+        confirmDialog.setContentText(
+            "Bạn có chắc chắn muốn xóa người dùng này không?\n\n" +
+            "Tên đăng nhập: " + selectedUser.getUsername() + "\n" +
+            "Họ và tên: " + selectedUser.getFullName() + "\n" +
+            "Email: " + selectedUser.getEmail() + "\n\n" +
+            "LƯU Ý: Nếu người dùng này là chủ hộ, tất cả thu phí và nhân khẩu liên quan sẽ bị xóa!"
+        );
+        
+        confirmDialog.showAndWait().ifPresent(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    userService.deleteUser(selectedUser.getId());
+                    ErrorDialog.showInfo("Thành công", "Đã xóa người dùng thành công");
+                    handleSearch();
+                } catch (DbException e) {
+                    ErrorDialog.showDbError(e.getMessage());
+                } catch (Exception e) {
+                    ErrorDialog.showError("Lỗi", "Đã xảy ra lỗi: " + e.getMessage());
+                }
+            }
+        });
+    }
 }
+
+
 
 
 

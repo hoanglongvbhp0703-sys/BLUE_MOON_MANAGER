@@ -12,6 +12,7 @@ import vn.bluemoon.service.PaymentService;
 import vn.bluemoon.util.ErrorDialog;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Controller for payment view
@@ -105,7 +106,7 @@ public class PaymentController {
     
     private void setupPaymentMethodComboBox() {
         paymentMethodComboBox.setItems(FXCollections.observableArrayList(
-            "Tiền mặt", "Chuyển khoản", "Thẻ tín dụng"
+            "Chuyển khoản", "Thẻ tín dụng"
         ));
         paymentMethodComboBox.getSelectionModel().selectFirst();
     }
@@ -177,9 +178,102 @@ public class PaymentController {
                 return;
             }
             
+            // Debug: Kiểm tra xem user có resident record không
+            vn.bluemoon.model.entity.Resident resident = new vn.bluemoon.repository.ResidentRepository().findByUserId(currentUser.getId());
+            if (resident == null) {
+                ErrorDialog.showInfo("Thông báo", 
+                    "Bạn chưa đăng ký thông tin cá nhân.\n\n" +
+                    "Vui lòng vào menu 'Cá nhân' → 'Thông tin cá nhân' để đăng ký thông tin trước.");
+                feeList.clear();
+                feeTable.setItems(feeList);
+                totalRemainingLabel.setText("Tổng số tiền cần đóng: 0 đ");
+                totalRemainingLabel.setStyle("-fx-text-fill: #e74c3c;");
+                return;
+            }
+            
+            // Debug: Kiểm tra fee collections của household
+            System.out.println("=== DEBUG PAYMENT ===");
+            System.out.println("User ID: " + currentUser.getId());
+            System.out.println("Resident ID: " + resident.getId() + ", Household ID: " + resident.getHouseholdId());
+            System.out.println("Resident Relationship: " + resident.getRelationship());
+            
+            // Kiểm tra trực tiếp trong database
+            try {
+                String directSql = "SELECT fc.*, r.user_id, r.relationship " +
+                                  "FROM fee_collections fc " +
+                                  "JOIN households h ON fc.household_id = h.id " +
+                                  "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
+                                  "WHERE fc.household_id = ?";
+                try (java.sql.Connection conn = vn.bluemoon.util.JdbcUtils.getConnection();
+                     java.sql.PreparedStatement stmt = conn.prepareStatement(directSql)) {
+                    stmt.setInt(1, resident.getHouseholdId());
+                    java.sql.ResultSet rs = stmt.executeQuery();
+                    int count = 0;
+                    while (rs.next()) {
+                        count++;
+                        System.out.println("  Direct DB Query - Fee ID: " + rs.getInt("id") + 
+                                         ", Month/Year: " + rs.getObject("month") + "/" + rs.getObject("year") +
+                                         ", Status: " + rs.getString("status") +
+                                         ", Amount: " + rs.getBigDecimal("amount") +
+                                         ", Resident user_id: " + rs.getObject("user_id") +
+                                         ", Relationship: " + rs.getString("relationship"));
+                    }
+                    System.out.println("Total fee collections in DB for household " + resident.getHouseholdId() + ": " + count);
+                }
+            } catch (Exception e) {
+                System.err.println("Error in direct DB query: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            // Kiểm tra xem có fee collections nào cho household này không (qua repository)
+            List<FeeCollection> allFeesForHousehold = new java.util.ArrayList<>();
+            try {
+                allFeesForHousehold = new vn.bluemoon.repository.FeeCollectionRepository().findByHouseholdId(resident.getHouseholdId());
+                System.out.println("Total fee collections via repository for household " + resident.getHouseholdId() + ": " + allFeesForHousehold.size());
+                for (FeeCollection fc : allFeesForHousehold) {
+                    System.out.println("  - Fee ID: " + fc.getId() + ", Month/Year: " + fc.getMonth() + "/" + fc.getYear() + 
+                                     ", Status: " + fc.getStatus() + ", Amount: " + fc.getAmount());
+                }
+            } catch (Exception e) {
+                System.err.println("Error checking household fees: " + e.getMessage());
+            }
+            
             feeList.clear();
-            feeList.addAll(paymentService.getUnpaidFeesForUser(currentUser.getId()));
+            List<FeeCollection> unpaidFees = paymentService.getUnpaidFeesForUser(currentUser.getId());
+            feeList.addAll(unpaidFees);
             feeTable.setItems(feeList);
+            
+            // Debug log
+            System.out.println("Found " + unpaidFees.size() + " unpaid fees for user");
+            
+            // Kiểm tra tất cả fees (bao gồm cả paid) để debug
+            try {
+                List<FeeCollection> allFeesForUser = new vn.bluemoon.repository.FeeCollectionRepository().findByUserId(currentUser.getId());
+                System.out.println("All fees for user (including paid): " + allFeesForUser.size());
+                int unpaidCount = 0, paidCount = 0, partialCount = 0, overpaidCount = 0;
+                for (FeeCollection fc : allFeesForUser) {
+                    String status = fc.getStatus();
+                    System.out.println("  - Fee ID: " + fc.getId() + ", Status: " + status + 
+                                     ", Month/Year: " + fc.getMonth() + "/" + fc.getYear() +
+                                     ", Amount: " + fc.getAmount() + ", Paid: " + fc.getPaidAmount());
+                    if ("unpaid".equals(status)) unpaidCount++;
+                    else if ("paid".equals(status)) paidCount++;
+                    else if ("partial_paid".equals(status)) partialCount++;
+                    else if ("overpaid".equals(status)) overpaidCount++;
+                }
+                System.out.println("Status breakdown - Unpaid: " + unpaidCount + ", Paid: " + paidCount + 
+                                 ", Partial: " + partialCount + ", Overpaid: " + overpaidCount);
+            } catch (Exception e) {
+                System.err.println("Error getting all fees: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            if (unpaidFees.isEmpty() && !allFeesForHousehold.isEmpty()) {
+                System.out.println("WARNING: Có fee collections cho household nhưng không có unpaid fees!");
+                System.out.println("Tất cả fees có thể đã được đánh dấu là 'paid'");
+                System.out.println("Nếu bạn vừa tạo fee mới, hãy kiểm tra xem fee đó có được tạo với đúng household_id không");
+            }
+            System.out.println("=== END DEBUG ===");
             
             // Cập nhật tổng số tiền còn lại
             BigDecimal totalRemaining = paymentService.getTotalRemainingAmount(currentUser.getId());
@@ -194,6 +288,9 @@ public class PaymentController {
             }
         } catch (DbException e) {
             ErrorDialog.showDbError(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorDialog.showError("Lỗi", "Lỗi khi tải danh sách thu phí: " + e.getMessage());
         }
     }
     

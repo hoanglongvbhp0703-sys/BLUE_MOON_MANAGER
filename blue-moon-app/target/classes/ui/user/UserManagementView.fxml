@@ -45,6 +45,7 @@
             <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
          </padding>
          <children>
+            <Button fx:id="deleteButton" text="🗑️ Xóa" onAction="#handleDelete" styleClass="button-danger" />
             <Button fx:id="disableButton" text="Vô hiệu hóa" onAction="#handleDisable" styleClass="button-danger" />
             <Button fx:id="enableButton" text="Kích hoạt" onAction="#handleEnable" styleClass="button-success" />
             <Button fx:id="requirePasswordChangeButton" text="Yêu cầu đổi mật khẩu" onAction="#handleRequirePasswordChange" styleClass="button-secondary" />

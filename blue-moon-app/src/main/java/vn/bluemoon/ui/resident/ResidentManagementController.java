@@ -34,6 +34,9 @@ public class ResidentManagementController {
     private Button refreshButton;
     
     @FXML
+    private Button deleteButton;
+    
+    @FXML
     private TableView<Resident> residentTable;
     
     @FXML
@@ -155,6 +158,38 @@ public class ResidentManagementController {
     
     private void updateTotalLabel() {
         totalLabel.setText("Tổng số: " + residentList.size() + " nhân khẩu");
+    }
+    
+    @FXML
+    private void handleDelete() {
+        Resident selected = residentTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            ErrorDialog.showError("Lỗi", "Vui lòng chọn một nhân khẩu để xóa");
+            return;
+        }
+        
+        // Xác nhận xóa
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Xác nhận xóa");
+        confirmDialog.setHeaderText("Xóa nhân khẩu");
+        confirmDialog.setContentText(
+            "Bạn có chắc chắn muốn xóa nhân khẩu này không?\n\n" +
+            "Tên: " + selected.getFullName() + "\n" +
+            "Mã hộ dân: " + selected.getHouseholdCode() + "\n\n" +
+            "LƯU Ý: Nếu đây là chủ hộ, tất cả thu phí liên quan sẽ bị xóa!"
+        );
+        
+        confirmDialog.showAndWait().ifPresent(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    residentService.deleteResident(selected.getId());
+                    ErrorDialog.showInfo("Thành công", "Đã xóa nhân khẩu thành công");
+                    loadAllResidents();
+                } catch (DbException e) {
+                    ErrorDialog.showDbError(e.getMessage());
+                }
+            }
+        });
     }
 }
 

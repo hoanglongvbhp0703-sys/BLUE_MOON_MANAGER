@@ -40,6 +40,8 @@ public class PersonalInfoController {
     @FXML
     private ComboBox<String> relationshipComboBox;
     @FXML
+    private ComboBox<String> statusComboBox;
+    @FXML
     private Button saveButton;
     @FXML
     private Button cancelButton;
@@ -60,6 +62,10 @@ public class PersonalInfoController {
         relationshipComboBox.getItems().addAll("Chủ hộ");
         relationshipComboBox.setValue("Chủ hộ");
         relationshipComboBox.setDisable(true); // Không cho phép thay đổi
+        
+        // Setup status combo box
+        statusComboBox.getItems().addAll("Đang ở", "Tạm trú", "Tạm vắng");
+        statusComboBox.setValue("Đang ở"); // Mặc định
         
         // Load existing data if available
         loadPersonalInfo();
@@ -100,6 +106,14 @@ public class PersonalInfoController {
                 apartmentCodeField.setText(resident.getApartmentCode());
                 householdCodeField.setText(resident.getHouseholdCode());
                 relationshipComboBox.setValue(resident.getRelationship());
+                
+                // Set status
+                if (resident.getStatus() != null) {
+                    String statusDisplay = resident.getStatusDisplay();
+                    statusComboBox.setValue(statusDisplay);
+                } else {
+                    statusComboBox.setValue("Đang ở");
+                }
             } else {
                 // Register mode
                 isEditMode = false;
@@ -158,6 +172,26 @@ public class PersonalInfoController {
             request.setApartmentCode(apartmentCodeField.getText() != null ? apartmentCodeField.getText().trim() : null);
             request.setHouseholdCode(householdCodeField.getText() != null ? householdCodeField.getText().trim() : null);
             request.setRelationship(relationshipComboBox.getValue());
+            
+            // Convert status display to database value
+            String statusDisplay = statusComboBox.getValue();
+            String statusValue = "active"; // Mặc định
+            if (statusDisplay != null) {
+                switch (statusDisplay) {
+                    case "Đang ở":
+                        statusValue = "active";
+                        break;
+                    case "Tạm trú":
+                        statusValue = "temporary_resident";
+                        break;
+                    case "Tạm vắng":
+                        statusValue = "temporary_absent";
+                        break;
+                    default:
+                        statusValue = "active";
+                }
+            }
+            request.setStatus(statusValue);
             
             // Save
             personalInfoService.registerOrUpdatePersonalInfo(currentUser.getId(), request);

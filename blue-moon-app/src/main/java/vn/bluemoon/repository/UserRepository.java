@@ -256,6 +256,21 @@ public class UserRepository {
             throw new DbException("Error checking email existence: " + e.getMessage(), e);
         }
     }
+    
+    /**
+     * Delete user by ID
+     */
+    public void delete(Integer userId) throws DbException {
+        String sql = "DELETE FROM users WHERE id = ?";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbException("Error deleting user: " + e.getMessage(), e);
+        }
+    }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         User user = new User();

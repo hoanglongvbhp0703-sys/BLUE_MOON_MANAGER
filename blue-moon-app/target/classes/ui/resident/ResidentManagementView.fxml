@@ -23,6 +23,8 @@
                <TextField fx:id="searchHouseholdCodeField" promptText="Mã hộ dân" prefWidth="150.0" />
                <Button fx:id="searchButton" text="🔍 Tìm kiếm" onAction="#handleSearch" styleClass="button-primary" />
                <Button fx:id="refreshButton" text="🔄 Làm mới" onAction="#handleRefresh" styleClass="button-secondary" />
+               <Region HBox.hgrow="ALWAYS" />
+               <Button fx:id="deleteButton" text="🗑️ Xóa" onAction="#handleDelete" styleClass="button-danger" />
             </HBox>
          </children>
       </VBox>

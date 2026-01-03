@@ -202,6 +202,8 @@ public class Resident {
         if (status == null) return "";
         switch (status.toLowerCase()) {
             case "active": return "Đang ở";
+            case "temporary_resident": return "Tạm trú";
+            case "temporary_absent": return "Tạm vắng";
             case "moved_out": return "Đã chuyển đi";
             case "deceased": return "Đã mất";
             default: return status;

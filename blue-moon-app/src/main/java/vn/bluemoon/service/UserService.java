@@ -4,7 +4,10 @@ import vn.bluemoon.exception.DbException;
 import vn.bluemoon.model.dto.RegisterRequest;
 import vn.bluemoon.model.dto.UserSearchRequest;
 import vn.bluemoon.model.entity.User;
+import vn.bluemoon.model.entity.Resident;
 import vn.bluemoon.repository.UserRepository;
+import vn.bluemoon.repository.ResidentRepository;
+import vn.bluemoon.repository.FeeCollectionRepository;
 import vn.bluemoon.util.PasswordHasher;
 import vn.bluemoon.validation.ValidationException;
 import vn.bluemoon.validation.Validators;
@@ -16,6 +19,8 @@ import java.util.List;
  */
 public class UserService {
     private final UserRepository userRepository = new UserRepository();
+    private final ResidentRepository residentRepository = new ResidentRepository();
+    private final FeeCollectionRepository feeCollectionRepository = new FeeCollectionRepository();
 
     /**
      * Register new user
@@ -143,6 +148,58 @@ public class UserService {
                 }
             }
             userRepository.update(user);
+        }
+    }
+    
+    /**
+     * Delete user and related data
+     * - Find resident linked to this user
+     * - If resident is "Chủ hộ", delete all fee collections for the household
+     * - Delete the resident
+     * - If household has no other residents, delete the household
+     * - Delete the user
+     */
+    public void deleteUser(Integer userId) throws DbException {
+        // Find resident linked to this user
+        Resident resident = residentRepository.findByUserId(userId);
+        
+        if (resident != null) {
+            Integer householdId = resident.getHouseholdId();
+            Integer residentId = resident.getId();
+            boolean isChuHo = "Chủ hộ".equals(resident.getRelationship());
+            
+            // If resident is "Chủ hộ", delete all fee collections for the household
+            if (isChuHo) {
+                feeCollectionRepository.deleteByHouseholdId(householdId);
+            }
+            
+            // Check if household has any other residents BEFORE deleting
+            boolean hasOtherResidents = residentRepository.hasOtherResidents(householdId, residentId);
+            
+            // Delete the resident
+            residentRepository.delete(residentId);
+            
+            // If no other residents, delete the household
+            if (!hasOtherResidents) {
+                deleteHousehold(householdId);
+            }
+        }
+        
+        // Delete the user
+        userRepository.delete(userId);
+    }
+    
+    /**
+     * Delete household by ID
+     */
+    private void deleteHousehold(Integer householdId) throws DbException {
+        String sql = "DELETE FROM households WHERE id = ?";
+        try (java.sql.Connection conn = vn.bluemoon.util.JdbcUtils.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, householdId);
+            stmt.executeUpdate();
+        } catch (java.sql.SQLException e) {
+            throw new DbException("Error deleting household: " + e.getMessage(), e);
         }
     }
 }

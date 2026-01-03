@@ -46,15 +46,21 @@ public class FeeCollectionService {
     
     /**
      * Create fee collection for a household
+     * Luôn tạo mới fee collection (không UPDATE fee cũ)
+     * Cho phép có nhiều fee collection cho cùng tháng/năm nếu cần
      */
     public FeeCollection createFeeCollection(Integer householdId, Integer month, Integer year, 
                                              BigDecimal amount) throws DbException {
+        // Luôn tạo mới fee collection, không kiểm tra duplicate
+        // Điều này cho phép admin thêm nhiều khoản thu phí cho cùng tháng/năm nếu cần
         FeeCollection fee = new FeeCollection();
         fee.setHouseholdId(householdId);
         fee.setMonth(month);
         fee.setYear(year);
         fee.setAmount(amount != null ? amount : BigDecimal.ZERO);
         fee.setStatus("unpaid");
+        fee.setPaidAmount(BigDecimal.ZERO);
+        fee.setFeeType("periodic");
         return feeRepository.create(fee);
     }
     

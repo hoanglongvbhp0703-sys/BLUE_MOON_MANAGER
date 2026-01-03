@@ -228,6 +228,41 @@ public class ResidentRepository {
         }
     }
     
+    /**
+     * Delete resident by ID
+     */
+    public void delete(Integer residentId) throws DbException {
+        String sql = "DELETE FROM residents WHERE id = ?";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, residentId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbException("Error deleting resident: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Check if household has any other residents
+     */
+    public boolean hasOtherResidents(Integer householdId, Integer excludeResidentId) throws DbException {
+        String sql = "SELECT COUNT(*) FROM residents WHERE household_id = ? AND id != ?";
+        
+        try (Connection conn = JdbcUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, householdId);
+            stmt.setInt(2, excludeResidentId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new DbException("Error checking other residents: " + e.getMessage(), e);
+        }
+    }
+    
     private Resident mapResultSetToResident(ResultSet rs) throws SQLException {
         Resident resident = new Resident();
         resident.setId(rs.getInt("id"));
