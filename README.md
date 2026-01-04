@@ -2,7 +2,7 @@
 
 Phần mềm quản lý nhân khẩu và thu phí chung cư Blue Moon
 
-**Phiên bản:** 1.0.0  
+**Phiên bản:** 2.0.0  
 **Ngày cập nhật:** 23/12/2025  
 **Nhóm:** 24
 
@@ -497,7 +497,7 @@ Dự án sử dụng kiến trúc 3-layer:
 - Validation cho tất cả input
 
 ### Tài liệu tham khảo
-
+- Tài liệu BTL IT4082
 - SRS Document v2.1 - Nhóm 24
 - File SRS: `blue-moon-app/docs/SRS.pdf`
 
