@@ -24,6 +24,13 @@ public class Resident {
     private LocalDate createdAt;
     private LocalDate updatedAt;
     
+    // Tạm trú/Tạm vắng
+    private LocalDate temporaryResidentFrom;
+    private LocalDate temporaryResidentTo;
+    private LocalDate temporaryAbsentFrom;
+    private LocalDate temporaryAbsentTo;
+    private String temporaryReason;
+    
     // Thông tin từ household và apartment (join)
     private String apartmentCode;
     private String householdCode;
@@ -187,6 +194,46 @@ public class Resident {
 
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
+    }
+    
+    public LocalDate getTemporaryResidentFrom() {
+        return temporaryResidentFrom;
+    }
+    
+    public void setTemporaryResidentFrom(LocalDate temporaryResidentFrom) {
+        this.temporaryResidentFrom = temporaryResidentFrom;
+    }
+    
+    public LocalDate getTemporaryResidentTo() {
+        return temporaryResidentTo;
+    }
+    
+    public void setTemporaryResidentTo(LocalDate temporaryResidentTo) {
+        this.temporaryResidentTo = temporaryResidentTo;
+    }
+    
+    public LocalDate getTemporaryAbsentFrom() {
+        return temporaryAbsentFrom;
+    }
+    
+    public void setTemporaryAbsentFrom(LocalDate temporaryAbsentFrom) {
+        this.temporaryAbsentFrom = temporaryAbsentFrom;
+    }
+    
+    public LocalDate getTemporaryAbsentTo() {
+        return temporaryAbsentTo;
+    }
+    
+    public void setTemporaryAbsentTo(LocalDate temporaryAbsentTo) {
+        this.temporaryAbsentTo = temporaryAbsentTo;
+    }
+    
+    public String getTemporaryReason() {
+        return temporaryReason;
+    }
+    
+    public void setTemporaryReason(String temporaryReason) {
+        this.temporaryReason = temporaryReason;
     }
     
     public String getGenderDisplay() {

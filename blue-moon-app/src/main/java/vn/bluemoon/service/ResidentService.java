@@ -4,7 +4,10 @@ import vn.bluemoon.exception.DbException;
 import vn.bluemoon.model.entity.Resident;
 import vn.bluemoon.repository.ResidentRepository;
 import vn.bluemoon.repository.FeeCollectionRepository;
+import vn.bluemoon.validation.ValidationException;
+import vn.bluemoon.validation.Validators;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -80,6 +83,89 @@ public class ResidentService {
         } catch (java.sql.SQLException e) {
             throw new DbException("Error deleting household: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Đăng ký tạm trú cho cư dân
+     */
+    public void registerTemporaryResident(Integer residentId, LocalDate fromDate, LocalDate toDate, String reason) 
+            throws DbException, ValidationException {
+        if (fromDate == null) {
+            throw new ValidationException("Ngày bắt đầu tạm trú không được để trống");
+        }
+        if (toDate == null) {
+            throw new ValidationException("Ngày kết thúc tạm trú không được để trống");
+        }
+        
+        if (toDate.isBefore(fromDate)) {
+            throw new ValidationException("Ngày kết thúc phải sau ngày bắt đầu");
+        }
+        
+        Resident resident = residentRepository.findById(residentId);
+        if (resident == null) {
+            throw new ValidationException("Không tìm thấy cư dân");
+        }
+        
+        resident.setStatus("temporary_resident");
+        resident.setTemporaryResidentFrom(fromDate);
+        resident.setTemporaryResidentTo(toDate);
+        resident.setTemporaryReason(reason);
+        // Clear tạm vắng nếu có
+        resident.setTemporaryAbsentFrom(null);
+        resident.setTemporaryAbsentTo(null);
+        
+        residentRepository.update(resident);
+    }
+    
+    /**
+     * Đăng ký tạm vắng cho cư dân
+     */
+    public void registerTemporaryAbsent(Integer residentId, LocalDate fromDate, LocalDate toDate, String reason) 
+            throws DbException, ValidationException {
+        if (fromDate == null) {
+            throw new ValidationException("Ngày bắt đầu tạm vắng không được để trống");
+        }
+        if (toDate == null) {
+            throw new ValidationException("Ngày kết thúc tạm vắng không được để trống");
+        }
+        
+        if (toDate.isBefore(fromDate)) {
+            throw new ValidationException("Ngày kết thúc phải sau ngày bắt đầu");
+        }
+        
+        Resident resident = residentRepository.findById(residentId);
+        if (resident == null) {
+            throw new ValidationException("Không tìm thấy cư dân");
+        }
+        
+        resident.setStatus("temporary_absent");
+        resident.setTemporaryAbsentFrom(fromDate);
+        resident.setTemporaryAbsentTo(toDate);
+        resident.setTemporaryReason(reason);
+        // Clear tạm trú nếu có
+        resident.setTemporaryResidentFrom(null);
+        resident.setTemporaryResidentTo(null);
+        
+        residentRepository.update(resident);
+    }
+    
+    /**
+     * Hủy tạm trú/tạm vắng, trở về trạng thái active
+     */
+    public void cancelTemporaryStatus(Integer residentId) throws DbException, ValidationException {
+        Resident resident = residentRepository.findById(residentId);
+        if (resident == null) {
+            throw new ValidationException("Không tìm thấy cư dân");
+        }
+        
+        resident.setStatus("active");
+        resident.setTemporaryResidentFrom(null);
+        resident.setTemporaryResidentTo(null);
+        resident.setTemporaryAbsentFrom(null);
+        resident.setTemporaryAbsentTo(null);
+        resident.setTemporaryReason(null);
+        
+        residentRepository.update(resident);
     }
 }
 

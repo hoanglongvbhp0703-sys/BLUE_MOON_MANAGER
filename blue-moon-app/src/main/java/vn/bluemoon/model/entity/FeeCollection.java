@@ -15,8 +15,10 @@ public class FeeCollection {
     private BigDecimal paidAmount; // Số tiền đã nộp
     private String status; // unpaid, paid, partial_paid, overpaid
     private String feeType; // periodic (định kỳ), non_periodic (không định kỳ)
+    private Integer feeTypeId; // ID của loại phí dịch vụ (từ bảng fee_types)
     private String reason; // Lý do thu phí (chỉ cho thu phí không định kỳ)
     private LocalDate paymentDate;
+    private LocalDate paymentDeadline; // Hạn thu phí (deadline để nộp phí)
     private String paymentMethod;
     private String notes;
     private LocalDate createdAt;
@@ -91,6 +93,14 @@ public class FeeCollection {
         this.feeType = feeType;
     }
 
+    public Integer getFeeTypeId() {
+        return feeTypeId;
+    }
+
+    public void setFeeTypeId(Integer feeTypeId) {
+        this.feeTypeId = feeTypeId;
+    }
+
     public String getReason() {
         return reason;
     }
@@ -105,6 +115,14 @@ public class FeeCollection {
 
     public void setPaymentDate(LocalDate paymentDate) {
         this.paymentDate = paymentDate;
+    }
+
+    public LocalDate getPaymentDeadline() {
+        return paymentDeadline;
+    }
+
+    public void setPaymentDeadline(LocalDate paymentDeadline) {
+        this.paymentDeadline = paymentDeadline;
     }
 
     public String getPaymentMethod() {

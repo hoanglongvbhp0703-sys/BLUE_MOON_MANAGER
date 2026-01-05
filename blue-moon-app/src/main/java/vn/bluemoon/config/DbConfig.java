@@ -35,25 +35,65 @@ public class DbConfig {
     }
 
     public String getUrl() {
-        return getProperty("db.url", "jdbc:mysql://localhost:3306/blue_moon");
+        // Try Spring Boot properties first, then legacy properties
+        String url = getProperty("spring.datasource.url");
+        if (url == null || url.isEmpty() || url.startsWith("${")) {
+            url = getProperty("db.url");
+        }
+        if (url == null || url.isEmpty() || url.startsWith("${")) {
+            url = "jdbc:mysql://localhost:3306/blue_moon";
+        }
+        return url;
     }
 
     public String getUsername() {
-        return getProperty("db.username", "root");
+        // Try Spring Boot properties first, then legacy properties
+        String username = getProperty("spring.datasource.username");
+        if (username == null || username.isEmpty() || username.startsWith("${")) {
+            username = getProperty("db.username");
+        }
+        if (username == null || username.isEmpty() || username.startsWith("${")) {
+            username = "root";
+        }
+        return username;
     }
 
     public String getPassword() {
-        return getProperty("db.password", "");
+        // Try Spring Boot properties first, then legacy properties
+        String password = getProperty("spring.datasource.password");
+        if (password == null || password.startsWith("${")) {
+            password = getProperty("db.password");
+        }
+        if (password == null || password.startsWith("${")) {
+            password = "";
+        }
+        return password;
     }
 
     public String getDriver() {
-        return getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
+        // Try Spring Boot properties first, then legacy properties
+        String driver = getProperty("spring.datasource.driver-class-name");
+        if (driver == null || driver.isEmpty() || driver.startsWith("${")) {
+            driver = getProperty("db.driver");
+        }
+        if (driver == null || driver.isEmpty() || driver.startsWith("${")) {
+            driver = "com.mysql.cj.jdbc.Driver";
+        }
+        return driver;
+    }
+
+    private String getProperty(String key) {
+        return properties.getProperty(key);
     }
 
     private String getProperty(String key, String defaultValue) {
-        return properties.getProperty(key, defaultValue);
+        String value = getProperty(key);
+        return (value == null || value.isEmpty() || value.startsWith("${")) ? defaultValue : value;
     }
 }
+
+
+
 
 
 

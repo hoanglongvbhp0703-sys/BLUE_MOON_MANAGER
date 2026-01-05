@@ -23,7 +23,9 @@ INSERT INTO functions (name, function_group_id, boundary_class, description) VAL
 ('Tạo menu', 2, 'MenuForm', 'Chức năng tạo menu động'),
 ('CRUD chức năng', 2, 'FunctionManagementForm', 'Chức năng quản lý các chức năng hệ thống'),
 ('Quản lý nhân khẩu', 3, 'ResidentManagementView', 'Chức năng quản lý nhân khẩu và hộ dân'),
-('Quản lý thu phí', 4, 'FeeCollectionView', 'Chức năng quản lý thu phí hàng tháng')
+('Quản lý thu phí', 4, 'FeeCollectionView', 'Chức năng quản lý thu phí hàng tháng'),
+('Quản lý khoản thu', 4, 'FeeTypeManagementView', 'Chức năng quản lý các loại khoản thu'),
+('Thực hiện thu phí', 4, 'FeeCollectionAction', 'Chức năng thực hiện thu phí và ghi nhận thanh toán')
 ON CONFLICT DO NOTHING;
 
 -- Insert default groups (roles)
@@ -40,14 +42,23 @@ SELECT 1, id FROM functions
 ON CONFLICT DO NOTHING;
 
 -- Assign specific functions to other groups
--- Tổ trưởng: Tìm kiếm người dùng, Quản lý người dùng, Quản lý nhân khẩu
+-- Tổ trưởng: Quản lý hộ gia đình, nhân khẩu, khoản thu, xem lịch sử thu, thống kê, quản lý tài khoản
 INSERT INTO group_functions (group_id, function_id)
-SELECT 2, id FROM functions WHERE name IN ('Tìm kiếm người dùng', 'Quản lý người dùng', 'Quản lý nhân khẩu')
+SELECT 2, id FROM functions WHERE name IN (
+    'Tìm kiếm người dùng', 
+    'Quản lý người dùng', 
+    'Quản lý nhân khẩu',
+    'Quản lý khoản thu',
+    'Quản lý thu phí'  -- Xem lịch sử thu và thống kê
+)
 ON CONFLICT DO NOTHING;
 
--- Kế toán: Tìm kiếm người dùng, Quản lý thu phí
+-- Kế toán: Thực hiện thu phí, tra cứu, thống kê (giới hạn), quản lý thông tin cá nhân
 INSERT INTO group_functions (group_id, function_id)
-SELECT 3, id FROM functions WHERE name IN ('Tìm kiếm người dùng', 'Quản lý thu phí')
+SELECT 3, id FROM functions WHERE name IN (
+    'Thực hiện thu phí',
+    'Quản lý thu phí'  -- Tra cứu và xem lịch sử
+)
 ON CONFLICT DO NOTHING;
 
 -- Ban quản trị: Tìm kiếm người dùng, Quản lý người dùng, Quản lý nhân khẩu

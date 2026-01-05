@@ -204,6 +204,11 @@ CREATE TABLE IF NOT EXISTS residents (
     temporary_address TEXT,
     status VARCHAR(20) DEFAULT 'active',
     notes TEXT,
+    temporary_resident_from DATE,
+    temporary_resident_to DATE,
+    temporary_absent_from DATE,
+    temporary_absent_to DATE,
+    temporary_reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
@@ -231,13 +236,16 @@ CREATE TABLE IF NOT EXISTS fee_collections (
     paid_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Số tiền đã nộp
     status VARCHAR(20) DEFAULT 'unpaid', -- unpaid, paid, partial_paid, overpaid
     fee_type VARCHAR(20) DEFAULT 'periodic', -- periodic (định kỳ), non_periodic (không định kỳ)
+    fee_type_id INT, -- ID của loại phí dịch vụ (từ bảng fee_types) - cho phép thu phí cùng tháng/năm nhưng khác loại phí
     reason TEXT, -- Lý do thu phí (chỉ cho thu phí không định kỳ)
     payment_date DATE,
+    payment_deadline DATE, -- Hạn thu phí (deadline để nộp phí)
     payment_method VARCHAR(50), -- cash, bank_transfer, credit_card
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE
+    FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE,
+    FOREIGN KEY (fee_type_id) REFERENCES fee_types(id) ON DELETE SET NULL
 );
 
 -- Note: Removed unique constraint to allow multiple fee collections for same household/month/year
@@ -249,6 +257,7 @@ CREATE TABLE IF NOT EXISTS fee_collections (
 CREATE INDEX IF NOT EXISTS idx_fee_collections_household_id ON fee_collections(household_id);
 CREATE INDEX IF NOT EXISTS idx_fee_collections_month_year ON fee_collections(year, month);
 CREATE INDEX IF NOT EXISTS idx_fee_collections_status ON fee_collections(status);
+CREATE INDEX IF NOT EXISTS idx_fee_collections_fee_type_id ON fee_collections(fee_type_id);
 
 -- Table: fee_types - Loại phí (phí quản lý, phí dịch vụ, v.v.)
 CREATE TABLE IF NOT EXISTS fee_types (

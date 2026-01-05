@@ -32,6 +32,8 @@ public class DatabaseInitializer {
         try {
             // First, try to connect to the database
             testConnection();
+            // Remove old unique constraint to allow multiple fees per month/year
+            removeOldUniqueConstraint();
             initialized = true;
             AppLogger.info("Database connection successful");
         } catch (DbException e) {
@@ -98,7 +100,18 @@ public class DatabaseInitializer {
             boolean isPostgreSQL = driver.contains("postgresql");
             
             // Extract base URL (remove database name)
-            String serverUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
+            int lastSlash = baseUrl.lastIndexOf('/');
+            if (lastSlash == -1) {
+                // No slash found, use default server URL
+                if (isPostgreSQL) {
+                    baseUrl = "jdbc:postgresql://localhost:5432/blue_moon";
+                } else {
+                    baseUrl = "jdbc:mysql://localhost:3306/blue_moon";
+                }
+                lastSlash = baseUrl.lastIndexOf('/');
+            }
+            
+            String serverUrl = baseUrl.substring(0, lastSlash);
             if (serverUrl.contains("?")) {
                 serverUrl = serverUrl.substring(0, serverUrl.indexOf('?'));
             }
@@ -212,6 +225,93 @@ public class DatabaseInitializer {
         }
     }
 
+    /**
+     * Remove old unique constraint on fee_collections to allow multiple fees per month/year
+     */
+    private static void removeOldUniqueConstraint() {
+        try {
+            Connection conn = JdbcUtils.getConnection();
+            try {
+                Statement stmt = conn.createStatement();
+                
+                String driver = dbConfig.getDriver();
+                boolean isPostgreSQL = driver.contains("postgresql");
+                
+                if (isPostgreSQL) {
+                    // PostgreSQL: Drop index and constraints
+                    try {
+                        stmt.executeUpdate("DROP INDEX IF EXISTS idx_fee_collections_household_month_year CASCADE");
+                        AppLogger.info("Dropped unique index idx_fee_collections_household_month_year");
+                    } catch (SQLException e) {
+                        // Ignore if doesn't exist
+                        if (!e.getMessage().contains("does not exist")) {
+                            AppLogger.warn("Error dropping index: " + e.getMessage());
+                        }
+                    }
+                    
+                    try {
+                        stmt.executeUpdate("ALTER TABLE fee_collections DROP CONSTRAINT IF EXISTS fee_collections_household_id_month_year_key CASCADE");
+                    } catch (SQLException e) {
+                        // Ignore if doesn't exist
+                    }
+                    
+                    try {
+                        stmt.executeUpdate("ALTER TABLE fee_collections DROP CONSTRAINT IF EXISTS idx_fee_collections_household_month_year CASCADE");
+                    } catch (SQLException e) {
+                        // Ignore if doesn't exist
+                    }
+                    
+                    // Check if fee_type_id column exists and create new unique constraint if it does
+                    try {
+                        java.sql.ResultSet rs = stmt.executeQuery(
+                            "SELECT COUNT(*) FROM information_schema.columns " +
+                            "WHERE table_name = 'fee_collections' AND column_name = 'fee_type_id'"
+                        );
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            // Create new unique constraint with fee_type_id
+                            try {
+                                stmt.executeUpdate(
+                                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_fee_collections_household_month_year_fee_type " +
+                                    "ON fee_collections(household_id, month, year, fee_type_id) " +
+                                    "WHERE month IS NOT NULL AND year IS NOT NULL AND fee_type_id IS NOT NULL"
+                                );
+                                AppLogger.info("Created unique index with fee_type_id");
+                            } catch (SQLException e) {
+                                // Ignore if already exists
+                                if (!e.getMessage().contains("already exists")) {
+                                    AppLogger.warn("Error creating new unique index: " + e.getMessage());
+                                }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        AppLogger.warn("Error checking for fee_type_id column: " + e.getMessage());
+                    }
+                } else {
+                    // MySQL: Drop index
+                    try {
+                        stmt.executeUpdate("DROP INDEX idx_fee_collections_household_month_year ON fee_collections");
+                        AppLogger.info("Dropped unique index idx_fee_collections_household_month_year");
+                    } catch (SQLException e) {
+                        // Ignore if doesn't exist
+                        if (!e.getMessage().contains("Unknown key") && !e.getMessage().contains("doesn't exist")) {
+                            AppLogger.warn("Error dropping index: " + e.getMessage());
+                        }
+                    }
+                }
+                
+                stmt.close();
+            } finally {
+                conn.close();
+            }
+        } catch (SQLException e) {
+            AppLogger.warn("Error removing old unique constraint: " + e.getMessage());
+            // Don't throw exception, just log warning
+        } catch (DbException e) {
+            AppLogger.warn("Error getting connection to remove old unique constraint: " + e.getMessage());
+            // Don't throw exception, just log warning
+        }
+    }
+    
     /**
      * Check if database is initialized
      */

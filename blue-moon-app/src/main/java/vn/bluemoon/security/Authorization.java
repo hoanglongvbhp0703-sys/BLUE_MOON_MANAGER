@@ -66,6 +66,42 @@ public class Authorization {
         }
         return false;
     }
+    
+    /**
+     * Check if user is admin (Quản trị viên)
+     * Admin has all permissions
+     */
+    public static boolean isAdmin(User user) throws DbException {
+        return hasRole(user, "Quản trị viên");
+    }
+    
+    /**
+     * Check if user can manage residents (Admin or Tổ trưởng)
+     */
+    public static boolean canManageResidents(User user) throws DbException {
+        return isAdmin(user) || hasRole(user, "Tổ trưởng");
+    }
+    
+    /**
+     * Check if user can manage fee types (Admin or Tổ trưởng)
+     */
+    public static boolean canManageFeeTypes(User user) throws DbException {
+        return isAdmin(user) || hasRole(user, "Tổ trưởng");
+    }
+    
+    /**
+     * Check if user can collect fees (Admin or Kế toán)
+     */
+    public static boolean canCollectFees(User user) throws DbException {
+        return isAdmin(user) || hasRole(user, "Kế toán");
+    }
+    
+    /**
+     * Check if user can manage users (Admin or Tổ trưởng)
+     */
+    public static boolean canManageUsers(User user) throws DbException {
+        return isAdmin(user) || hasRole(user, "Tổ trưởng");
+    }
 }
 
 

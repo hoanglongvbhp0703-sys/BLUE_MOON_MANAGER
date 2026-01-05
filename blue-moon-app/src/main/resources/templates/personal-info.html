@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin cá nhân - Blue Moon</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">Blue Moon - Thông tin cá nhân</h1>
+            <div class="nav-user">
+                <span th:text="${user.fullName}">Người dùng</span>
+                <a th:href="@{/main}" class="btn btn-sm">Trang chủ</a>
+                <a th:href="@{/logout}" class="btn btn-sm">Đăng xuất</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="dashboard-container">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); max-width: 800px; margin: 0 auto;">
+            <h2 style="margin-bottom: 30px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Thông tin cá nhân</h2>
+            
+            <div class="info-panel" style="background: #f9f9f9; padding: 25px; border-radius: 8px;">
+                <div class="info-row" style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span class="label" style="font-weight: bold; color: #667eea; min-width: 150px;">Tên đăng nhập:</span>
+                    <span class="value" style="color: #333; background: white; padding: 8px 15px; border-radius: 5px; display: inline-block;" th:text="${user.username}">-</span>
+                </div>
+                <div class="info-row" style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span class="label" style="font-weight: bold; color: #667eea; min-width: 150px;">Email:</span>
+                    <span class="value" style="color: #333; background: white; padding: 8px 15px; border-radius: 5px; display: inline-block;" th:text="${user.email}">-</span>
+                </div>
+                <div class="info-row" style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span class="label" style="font-weight: bold; color: #667eea; min-width: 150px;">Họ và tên:</span>
+                    <span class="value" style="color: #333; background: white; padding: 8px 15px; border-radius: 5px; display: inline-block;" th:text="${user.fullName}">-</span>
+                </div>
+                <div class="info-row" style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+                    <span class="label" style="font-weight: bold; color: #667eea; min-width: 150px;">Số điện thoại:</span>
+                    <span class="value" style="color: #333; background: white; padding: 8px 15px; border-radius: 5px; display: inline-block;" th:text="${user.phone != null ? user.phone : '-'}">-</span>
+                </div>
+                <div class="info-row" style="padding: 15px 0;">
+                    <span class="label" style="font-weight: bold; color: #667eea; min-width: 150px;">Địa chỉ:</span>
+                    <span class="value" style="color: #333; background: white; padding: 8px 15px; border-radius: 5px; display: inline-block;" th:text="${user.address != null ? user.address : '-'}">-</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <a th:href="@{/change-password}" class="btn btn-primary" style="margin-right: 10px;">Đổi mật khẩu</a>
+                <a th:href="@{/main}" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
