@@ -24,46 +24,12 @@ public class ResidentRepository {
         
         System.out.println("DEBUG: ResidentRepository.findAll() - isPostgreSQL=" + isPostgreSQL);
         
-        // Lấy tất cả households, sau đó LEFT JOIN với residents để lấy thông tin chủ hộ
-        // Nếu không có resident, dùng owner_name từ households
+        // Lấy tất cả households có ít nhất 1 resident với relationship = 'Chủ hộ'
+        // Ưu tiên resident có user_id (resident được liên kết với user account)
         String sql;
         if (isPostgreSQL) {
-            sql = "SELECT DISTINCT ON (h.id) " +
-                 "COALESCE(r.id, 0) as id, " +
-                 "h.id as household_id, " +
-                 "COALESCE(r.user_id, NULL) as user_id, " +
-                 "COALESCE(r.full_name, h.owner_name) as full_name, " +
-                 "COALESCE(r.id_card, h.owner_id_card) as id_card, " +
-                 "r.date_of_birth, " +
-                 "r.gender, " +
-                 "COALESCE(r.relationship, 'Chủ hộ') as relationship, " +
-                 "COALESCE(r.phone, h.owner_phone) as phone, " +
-                 "COALESCE(r.email, h.owner_email) as email, " +
-                 "r.occupation, " +
-                 "r.permanent_address, " +
-                 "r.temporary_address, " +
-                 "r.status, " +
-                 "r.notes, " +
-                 "r.temporary_resident_from, " +
-                 "r.temporary_resident_to, " +
-                 "r.temporary_absent_from, " +
-                 "r.temporary_absent_to, " +
-                 "r.temporary_reason, " +
-                 "COALESCE(r.created_at, h.created_at) as created_at, " +
-                 "COALESCE(r.updated_at, h.updated_at) as updated_at, " +
-                 "a.apartment_code, " +
-                 "h.household_code, " +
-                 "h.owner_name " +
-                 "FROM households h " +
-                 "JOIN apartments a ON h.apartment_id = a.id " +
-                 "LEFT JOIN residents r ON r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
-                 "WHERE a.apartment_code NOT LIKE 'DEFAULT-%' " +
-                 "ORDER BY h.id, r.user_id DESC NULLS LAST, r.created_at DESC NULLS LAST";
-        } else {
-            // MySQL - lấy tất cả households và join với resident chủ hộ (nếu có)
-            // Dùng subquery để đảm bảo mỗi household chỉ có một resident
             sql = "SELECT " +
-                 "COALESCE(r.id, 0) as id, " +
+                 "r.id, " +
                  "h.id as household_id, " +
                  "r.user_id, " +
                  "COALESCE(r.full_name, h.owner_name) as full_name, " +
@@ -90,12 +56,53 @@ public class ResidentRepository {
                  "h.owner_name " +
                  "FROM households h " +
                  "JOIN apartments a ON h.apartment_id = a.id " +
-                 "LEFT JOIN residents r ON r.household_id = h.id " +
+                 "INNER JOIN LATERAL ( " +
+                 "    SELECT r.* FROM residents r " +
+                 "    WHERE r.household_id = h.id AND r.relationship = 'Chủ hộ' " +
+                 "    ORDER BY CASE WHEN r.user_id IS NOT NULL THEN 0 ELSE 1 END, " +
+                 "             r.user_id DESC NULLS LAST, r.created_at DESC " +
+                 "    LIMIT 1 " +
+                 ") r ON true " +
+                 "WHERE a.apartment_code NOT LIKE 'DEFAULT-%' " +
+                 "ORDER BY h.id";
+        } else {
+            // MySQL - chỉ lấy households có ít nhất 1 resident với relationship = 'Chủ hộ'
+            // Dùng INNER JOIN để đảm bảo chỉ lấy households có residents
+            sql = "SELECT " +
+                 "r.id, " +
+                 "h.id as household_id, " +
+                 "r.user_id, " +
+                 "COALESCE(r.full_name, h.owner_name) as full_name, " +
+                 "COALESCE(r.id_card, h.owner_id_card) as id_card, " +
+                 "r.date_of_birth, " +
+                 "r.gender, " +
+                 "COALESCE(r.relationship, 'Chủ hộ') as relationship, " +
+                 "COALESCE(r.phone, h.owner_phone) as phone, " +
+                 "COALESCE(r.email, h.owner_email) as email, " +
+                 "r.occupation, " +
+                 "r.permanent_address, " +
+                 "r.temporary_address, " +
+                 "r.status, " +
+                 "r.notes, " +
+                 "r.temporary_resident_from, " +
+                 "r.temporary_resident_to, " +
+                 "r.temporary_absent_from, " +
+                 "r.temporary_absent_to, " +
+                 "r.temporary_reason, " +
+                 "COALESCE(r.created_at, h.created_at) as created_at, " +
+                 "COALESCE(r.updated_at, h.updated_at) as updated_at, " +
+                 "a.apartment_code, " +
+                 "h.household_code, " +
+                 "h.owner_name " +
+                 "FROM households h " +
+                 "JOIN apartments a ON h.apartment_id = a.id " +
+                 "INNER JOIN residents r ON r.household_id = h.id " +
                  "AND r.relationship = 'Chủ hộ' " +
                  "AND r.id = (SELECT r2.id FROM residents r2 " +
                  "            WHERE r2.household_id = h.id " +
                  "            AND r2.relationship = 'Chủ hộ' " +
-                 "            ORDER BY r2.user_id DESC, r2.created_at DESC " +
+                 "            ORDER BY CASE WHEN r2.user_id IS NOT NULL THEN 0 ELSE 1 END, " +
+                 "                     r2.user_id DESC, r2.created_at DESC " +
                  "            LIMIT 1) " +
                  "WHERE a.apartment_code NOT LIKE 'DEFAULT-%' " +
                  "ORDER BY h.id";
@@ -156,32 +163,86 @@ public class ResidentRepository {
      */
     public List<Resident> search(String name, String apartmentCode, String householdCode) throws DbException {
         List<Resident> residents = new ArrayList<>();
-        StringBuilder sql = new StringBuilder(
-            "SELECT r.*, " +
-            "a.apartment_code, " +
-            "h.household_code, " +
-            "h.owner_name " +
-            "FROM residents r " +
-            "JOIN households h ON r.household_id = h.id " +
-            "JOIN apartments a ON h.apartment_id = a.id " +
-            "WHERE r.relationship = 'Chủ hộ'"
-        );
+        boolean isPostgreSQL = isPostgreSQL();
+        
+        // Đảm bảo mỗi household chỉ có một chủ hộ (ưu tiên resident có user_id)
+        StringBuilder sql;
+        if (isPostgreSQL) {
+            sql = new StringBuilder(
+                "SELECT DISTINCT ON (h.id) " +
+                "r.*, " +
+                "a.apartment_code, " +
+                "h.household_code, " +
+                "h.owner_name " +
+                "FROM households h " +
+                "JOIN apartments a ON h.apartment_id = a.id " +
+                "INNER JOIN LATERAL ( " +
+                "    SELECT r2.* FROM residents r2 " +
+                "    WHERE r2.household_id = h.id AND r2.relationship = 'Chủ hộ' " +
+                "    ORDER BY CASE WHEN r2.user_id IS NOT NULL THEN 0 ELSE 1 END, " +
+                "             r2.user_id DESC NULLS LAST, r2.created_at DESC " +
+                "    LIMIT 1 " +
+                ") r ON true " +
+                "WHERE a.apartment_code NOT LIKE 'DEFAULT-%'"
+            );
+        } else {
+            sql = new StringBuilder(
+                "SELECT r.*, " +
+                "a.apartment_code, " +
+                "h.household_code, " +
+                "h.owner_name " +
+                "FROM households h " +
+                "JOIN apartments a ON h.apartment_id = a.id " +
+                "INNER JOIN residents r ON r.household_id = h.id " +
+                "AND r.relationship = 'Chủ hộ' " +
+                "AND r.id = (SELECT r2.id FROM residents r2 " +
+                "            WHERE r2.household_id = h.id " +
+                "            AND r2.relationship = 'Chủ hộ' " +
+                "            ORDER BY CASE WHEN r2.user_id IS NOT NULL THEN 0 ELSE 1 END, " +
+                "                     r2.user_id DESC, r2.created_at DESC " +
+                "            LIMIT 1) " +
+                "WHERE a.apartment_code NOT LIKE 'DEFAULT-%'"
+            );
+        }
+        
         List<Object> params = new ArrayList<>();
         
         if (name != null && !name.trim().isEmpty()) {
-            sql.append(" AND r.full_name ILIKE ?");
+            if (isPostgreSQL) {
+                // Tìm trong cả r.full_name và h.owner_name
+                sql.append(" AND (COALESCE(r.full_name, h.owner_name) ILIKE ? OR h.owner_name ILIKE ?)");
+            } else {
+                sql.append(" AND (COALESCE(r.full_name, h.owner_name) LIKE ? OR h.owner_name LIKE ?)");
+            }
+            params.add("%" + name + "%");
             params.add("%" + name + "%");
         }
         if (apartmentCode != null && !apartmentCode.trim().isEmpty()) {
-            sql.append(" AND a.apartment_code ILIKE ?");
+            if (isPostgreSQL) {
+                sql.append(" AND a.apartment_code ILIKE ?");
+            } else {
+                sql.append(" AND a.apartment_code LIKE ?");
+            }
             params.add("%" + apartmentCode + "%");
         }
         if (householdCode != null && !householdCode.trim().isEmpty()) {
-            sql.append(" AND h.household_code ILIKE ?");
+            if (isPostgreSQL) {
+                sql.append(" AND h.household_code ILIKE ?");
+            } else {
+                sql.append(" AND h.household_code LIKE ?");
+            }
             params.add("%" + householdCode + "%");
         }
         
-        sql.append(" ORDER BY r.created_at DESC");
+        if (isPostgreSQL) {
+            sql.append(" ORDER BY h.id, r.user_id DESC NULLS LAST, r.created_at DESC");
+        } else {
+            sql.append(" ORDER BY h.id");
+        }
+        
+        System.out.println("DEBUG: ResidentRepository.search() - name=" + name + ", apartmentCode=" + apartmentCode + ", householdCode=" + householdCode);
+        System.out.println("DEBUG: SQL=" + sql.toString());
+        System.out.println("DEBUG: Params=" + params);
         
         try (Connection conn = JdbcUtils.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
@@ -191,10 +252,19 @@ public class ResidentRepository {
             }
             
             ResultSet rs = stmt.executeQuery();
+            int count = 0;
             while (rs.next()) {
-                residents.add(mapResultSetToResident(rs));
+                Resident resident = mapResultSetToResident(rs);
+                residents.add(resident);
+                count++;
+                System.out.println("DEBUG: Found resident #" + count + ": " + resident.getFullName() + 
+                                 " (Resident ID: " + resident.getId() + ", Household ID: " + resident.getHouseholdId() + 
+                                 ", User ID: " + resident.getUserId() + ", Apartment: " + resident.getApartmentCode() + ")");
             }
+            System.out.println("DEBUG: Total residents found: " + count);
         } catch (SQLException e) {
+            System.err.println("DEBUG: SQL Error in search: " + e.getMessage());
+            e.printStackTrace();
             throw new DbException("Error searching residents: " + e.getMessage(), e);
         }
         return residents;

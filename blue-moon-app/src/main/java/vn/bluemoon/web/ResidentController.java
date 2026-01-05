@@ -61,7 +61,12 @@ public class ResidentController {
                 residents = residentService.getAllResidents();
             }
             
+            // Lấy danh sách households để chọn khi thêm nhân khẩu
+            vn.bluemoon.repository.ResidentRepository residentRepo = new vn.bluemoon.repository.ResidentRepository();
+            List<vn.bluemoon.model.entity.Resident> households = residentRepo.findAll();
+            
             model.addAttribute("residents", residents != null ? residents : new java.util.ArrayList<>());
+            model.addAttribute("households", households != null ? households : new java.util.ArrayList<>());
             model.addAttribute("user", user);
             model.addAttribute("searchName", name != null ? name : "");
             model.addAttribute("searchApartmentCode", apartmentCode != null ? apartmentCode : "");
@@ -225,6 +230,114 @@ public class ResidentController {
             redirectAttributes.addFlashAttribute("success", "Đã xóa nhân khẩu và toàn bộ dữ liệu liên quan thành công");
         } catch (DbException e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa nhân khẩu: " + e.getMessage());
+        }
+        
+        return "redirect:/residents";
+    }
+    
+    @PostMapping("/residents/add")
+    public String addResident(
+            HttpSession session,
+            @RequestParam(required = false) Integer householdId,
+            @RequestParam(required = false) String apartmentCode,
+            @RequestParam(required = false) String householdCode,
+            @RequestParam String fullName,
+            @RequestParam String idCard,
+            @RequestParam(required = false) String dateOfBirth,
+            @RequestParam(required = false) String gender,
+            @RequestParam String relationship,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String occupation,
+            @RequestParam(required = false) String permanentAddress,
+            @RequestParam(required = false) String temporaryAddress,
+            @RequestParam(required = false) String status,
+            RedirectAttributes redirectAttributes) {
+        
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        
+        // Admin và Tổ trưởng có quyền thêm nhân khẩu
+        try {
+            if (!vn.bluemoon.security.Authorization.canManageResidents(user)) {
+                redirectAttributes.addFlashAttribute("error", "Bạn không có quyền thực hiện chức năng này");
+                return "redirect:/residents";
+            }
+        } catch (DbException e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi kiểm tra quyền: " + e.getMessage());
+            return "redirect:/residents";
+        }
+        
+        try {
+            // Validate relationship
+            if (relationship == null || relationship.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Vui lòng chọn quan hệ với chủ hộ");
+                return "redirect:/residents";
+            }
+            
+            boolean isChuHo = "Chủ hộ".equals(relationship.trim());
+            
+            // If "Chủ hộ", need to create new household
+            Integer finalHouseholdId = householdId;
+            if (isChuHo) {
+                // Validate apartment code and household code
+                if (apartmentCode == null || apartmentCode.trim().isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Mã căn hộ không được để trống khi thêm chủ hộ");
+                    return "redirect:/residents";
+                }
+                if (householdCode == null || householdCode.trim().isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Mã hộ không được để trống khi thêm chủ hộ");
+                    return "redirect:/residents";
+                }
+                
+                // Create new household
+                finalHouseholdId = residentService.createHousehold(apartmentCode.trim(), householdCode.trim(), fullName, phone, email);
+            } else {
+                // For non-"Chủ hộ", must have householdId
+                if (householdId == null) {
+                    redirectAttributes.addFlashAttribute("error", "Vui lòng chọn hộ dân");
+                    return "redirect:/residents";
+                }
+            }
+            
+            // Parse date of birth
+            LocalDate dob = null;
+            if (dateOfBirth != null && !dateOfBirth.trim().isEmpty()) {
+                try {
+                    dob = LocalDate.parse(dateOfBirth);
+                } catch (Exception e) {
+                    redirectAttributes.addFlashAttribute("error", "Ngày sinh không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD");
+                    return "redirect:/residents";
+                }
+            }
+            
+            // Set default status
+            if (status == null || status.trim().isEmpty()) {
+                status = "active";
+            }
+            
+            residentService.createResident(
+                finalHouseholdId,
+                fullName,
+                idCard,
+                dob,
+                gender,
+                relationship,
+                phone,
+                email,
+                occupation,
+                permanentAddress,
+                temporaryAddress,
+                status
+            );
+            
+            redirectAttributes.addFlashAttribute("success", "Đã thêm nhân khẩu thành công");
+        } catch (ValidationException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (DbException e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi thêm nhân khẩu: " + e.getMessage());
         }
         
         return "redirect:/residents";

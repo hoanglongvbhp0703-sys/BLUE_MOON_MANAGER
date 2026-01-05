@@ -156,7 +156,7 @@ public class FeeController {
             model.addAttribute("searchHouseholdCode", householdCode != null ? householdCode : "");
             model.addAttribute("searchOwnerName", ownerName != null ? ownerName : "");
             model.addAttribute("searchMonth", month);
-            model.addAttribute("searchYear", year != null ? year : LocalDate.now().getYear());
+            model.addAttribute("searchYear", year); // Không set mặc định, để null nếu không chọn
             model.addAttribute("searchStatus", status != null ? status : "all");
             model.addAttribute("totalCount", total);
             model.addAttribute("paidCount", paid);
@@ -358,7 +358,20 @@ public class FeeController {
             FeeTypeService feeTypeService = new FeeTypeService();
             int successCount = 0;
             
-            if (residentId != null || householdId != null) {
+            // Debug logs
+            System.out.println("DEBUG: collectFeeFromType - feeTypeId=" + feeTypeId);
+            System.out.println("DEBUG: collectFeeFromType - residentId=" + residentId);
+            System.out.println("DEBUG: collectFeeFromType - householdId=" + householdId);
+            System.out.println("DEBUG: collectFeeFromType - month=" + month + ", year=" + year);
+            
+            // Kiểm tra xem có chọn hộ dân cụ thể không
+            // residentId và householdId phải có giá trị hợp lệ (> 0) để thu phí cho một hộ
+            boolean hasSpecificHousehold = (residentId != null && residentId > 0) || (householdId != null && householdId > 0);
+            
+            System.out.println("DEBUG: collectFeeFromType - hasSpecificHousehold=" + hasSpecificHousehold);
+            
+            if (hasSpecificHousehold) {
+                System.out.println("DEBUG: collectFeeFromType - Thu phí cho một hộ dân cụ thể");
                 // Thu phí cho một hộ dân cụ thể
                 vn.bluemoon.model.entity.FeeType feeType = feeTypeService.getFeeTypeById(feeTypeId);
                 if (feeType == null) {
@@ -411,11 +424,14 @@ public class FeeController {
                     }
                 }
                 
+                System.out.println("DEBUG: collectFeeFromType - Creating fee for householdId=" + finalHouseholdId + 
+                                 ", amount=" + feeType.getDefaultAmount() + ", feeTypeId=" + feeTypeId);
                 feeCollectionService.createFeeCollection(finalHouseholdId, currentMonth, currentYear, feeType.getDefaultAmount(), feeTypeId, deadline);
                 successCount = 1;
                 redirectAttributes.addFlashAttribute("success", "Đã tạo thu phí thành công");
             } else {
                 // Thu phí cho tất cả hộ dân
+                System.out.println("DEBUG: collectFeeFromType - Thu phí cho TẤT CẢ hộ dân");
                 // Parse payment deadline nếu có
                 java.time.LocalDate deadline = null;
                 if (paymentDeadline != null && !paymentDeadline.isEmpty()) {

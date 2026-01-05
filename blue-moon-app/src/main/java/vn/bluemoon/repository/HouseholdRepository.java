@@ -14,10 +14,30 @@ import java.sql.Statement;
 public class HouseholdRepository {
     
     /**
-     * Count all households
+     * Count all households that have at least one resident with relationship = 'Chủ hộ'
+     * This ensures that households without residents are not counted
      */
     public int countAll() throws DbException {
-        String sql = "SELECT COUNT(*) as count FROM households";
+        boolean isPostgreSQL = isPostgreSQL();
+        String sql;
+        
+        if (isPostgreSQL) {
+            // PostgreSQL: Count households that have at least one resident with relationship = 'Chủ hộ'
+            sql = "SELECT COUNT(DISTINCT h.id) as count " +
+                  "FROM households h " +
+                  "JOIN apartments a ON h.apartment_id = a.id " +
+                  "INNER JOIN residents r ON r.household_id = h.id " +
+                  "AND r.relationship = 'Chủ hộ' " +
+                  "WHERE a.apartment_code NOT LIKE 'DEFAULT-%'";
+        } else {
+            // MySQL: Count households that have at least one resident with relationship = 'Chủ hộ'
+            sql = "SELECT COUNT(DISTINCT h.id) as count " +
+                  "FROM households h " +
+                  "JOIN apartments a ON h.apartment_id = a.id " +
+                  "INNER JOIN residents r ON r.household_id = h.id " +
+                  "AND r.relationship = 'Chủ hộ' " +
+                  "WHERE a.apartment_code NOT LIKE 'DEFAULT-%'";
+        }
         
         try (Connection conn = JdbcUtils.getConnection();
              Statement stmt = conn.createStatement();
@@ -31,5 +51,19 @@ public class HouseholdRepository {
         }
         return 0;
     }
+    
+    /**
+     * Check if database is PostgreSQL
+     */
+    private boolean isPostgreSQL() {
+        try {
+            String driver = vn.bluemoon.config.DbConfig.getInstance().getDriver();
+            return driver != null && driver.contains("postgresql");
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
+
+
 

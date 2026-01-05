@@ -15,3 +15,7 @@ ADD COLUMN IF NOT EXISTS temporary_reason TEXT;
 -- ADD COLUMN temporary_absent_to DATE,
 -- ADD COLUMN temporary_reason TEXT;
 
+
+
+
+

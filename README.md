@@ -106,79 +106,53 @@ Blue Moon Apartment Management System là phần mềm quản lý toàn diện c
 
 ---
 
-## Cài đặt và cấu hình
+## Cài đặt và chạy
 
-### 1. Cài đặt Database
+### Bước 1: Cài đặt Database
 
 #### PostgreSQL (Khuyến nghị)
 
-**Bước 1: Tạo Database**
-
+1. Tạo database:
 ```sql
 CREATE DATABASE blue_moon WITH ENCODING 'UTF8';
 ```
 
-Hoặc qua psql:
-```bash
-psql -U postgres -p 5433
-CREATE DATABASE blue_moon WITH ENCODING 'UTF8';
-\q
-```
-
-**Bước 2: Chạy Schema**
-
-1. Mở pgAdmin hoặc psql
-2. Kết nối với database `blue_moon`
-3. Chạy file: `blue-moon-app/src/main/resources/sql/schema-postgresql.sql`
-
-**Bước 3: Chạy Seed Data**
-
-Chạy file: `blue-moon-app/src/main/resources/sql/seed-postgresql.sql`
-
-**Lưu ý:** File seed đã bao gồm:
-- Dữ liệu mặc định (chức năng, nhóm, admin user)
-- Dữ liệu hộ dân (đã comment, uncomment khi cần)
-- Dữ liệu thu phí (đã comment, uncomment khi cần)
+2. Chạy schema và seed data:
+   - Mở pgAdmin hoặc psql, kết nối với database `blue_moon`
+   - Chạy file: `blue-moon-app/src/main/resources/sql/schema-postgresql.sql`
+   - Chạy file: `blue-moon-app/src/main/resources/sql/seed-postgresql.sql`
 
 #### MySQL
 
-**Bước 1: Tạo Database**
-
+1. Tạo database:
 ```sql
 CREATE DATABASE blue_moon CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-**Bước 2: Chạy Schema**
-
+2. Chạy schema và seed data:
 ```bash
 mysql -u root -p blue_moon < blue-moon-app/src/main/resources/sql/schema.sql
-```
-
-**Bước 3: Chạy Seed Data**
-
-```bash
 mysql -u root -p blue_moon < blue-moon-app/src/main/resources/sql/seed.sql
 ```
 
-### 2. Cấu hình application.properties
+### Bước 2: Cấu hình Database
 
 Chỉnh sửa file `blue-moon-app/src/main/resources/application.properties`:
 
 ```properties
-# Database Configuration
-# Cho PostgreSQL (khuyến nghị):
+# Database Configuration (PostgreSQL)
 spring.datasource.url=jdbc:postgresql://localhost:5433/blue_moon
 spring.datasource.username=postgres
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=org.postgresql.Driver
 
-# Cho MySQL:
+# Database Configuration (MySQL - uncomment nếu dùng MySQL)
 #spring.datasource.url=jdbc:mysql://localhost:3306/blue_moon?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
 #spring.datasource.username=root
 #spring.datasource.password=your_password
 #spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
-# Email Configuration (for password reset)
+# Email Configuration (tùy chọn - cho chức năng quên mật khẩu)
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=your_email@gmail.com
@@ -187,27 +161,27 @@ spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 ```
 
-### 3. Build và chạy
+### Bước 3: Build và chạy ứng dụng
 
 ```bash
-# Build project
 cd blue-moon-app
 mvn clean package
-
-# Chạy ứng dụng web
 mvn spring-boot:run
 ```
 
-Hoặc chạy file JAR:
+Hoặc chạy bằng JAR:
 ```bash
 java -jar target/blue-moon-app-1.0.0.jar
 ```
 
-Hoặc sử dụng IDE để chạy class `vn.bluemoon.BlueMoonApplication`
+Hoặc chạy trực tiếp từ IDE: Run class `vn.bluemoon.BlueMoonApplication`
 
-**Truy cập ứng dụng:**
+### Bước 4: Truy cập ứng dụng
+
 - Mở trình duyệt và truy cập: `http://localhost:8080`
-- Trang đăng nhập: `http://localhost:8080/login`
+- Đăng nhập với tài khoản mặc định:
+  - Username: `admin`
+  - Password: `admin123`
 
 ---
 

@@ -199,6 +199,7 @@
                     <div class="form-group">
                         <label>Năm</label>
                         <select name="year">
+                            <option value="">Tất cả</option>
                             <option th:each="y : ${years}" 
                                     th:value="${y}" 
                                     th:text="${y}"
@@ -333,13 +334,69 @@
                             <input type="checkbox" id="selectAllHouseholds" onchange="toggleHouseholdSelect()" style="width: auto;">
                             <span style="font-weight: bold;">Thu phí cho tất cả các hộ dân</span>
                         </label>
-                        <select name="residentId" id="householdSelect" class="form-group" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            <option value="">-- Chọn hộ dân --</option>
-                            <option th:each="household : ${households}" 
-                                    th:value="${household.id > 0 ? household.id : household.householdId}"
-                                    th:data-household-id="${household.householdId}"
-                                    th:text="${household.fullName + ' - ' + household.apartmentCode + ' - ' + household.householdCode}"></option>
-                        </select>
+                        
+                        <!-- Tìm kiếm hộ dân -->
+                        <div style="margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                <div>
+                                    <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px;">Tìm theo chủ hộ</label>
+                                    <input type="text" id="searchOwnerName" placeholder="Nhập tên chủ hộ" 
+                                           onkeyup="filterHouseholds()" 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px;">Tìm theo mã căn hộ</label>
+                                    <input type="text" id="searchApartmentCode" placeholder="Nhập mã căn hộ" 
+                                           onkeyup="filterHouseholds()" 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px;">Tìm theo mã hộ</label>
+                                    <input type="text" id="searchHouseholdCode" placeholder="Nhập mã hộ" 
+                                           onkeyup="filterHouseholds()" 
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearHouseholdSearch()" style="padding: 6px 15px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 12px;">Xóa bộ lọc</button>
+                        </div>
+                        
+                        <!-- Bảng danh sách hộ dân -->
+                        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                            <table class="data-table" style="width: 100%; margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">Chọn</th>
+                                        <th>Tên chủ hộ</th>
+                                        <th>Mã căn hộ</th>
+                                        <th>Mã hộ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="householdTableBody">
+                                    <tr th:each="household : ${households}" 
+                                        class="household-row"
+                                        th:data-owner-name="${household.fullName != null ? household.fullName.toLowerCase() : ''}"
+                                        th:data-apartment-code="${household.apartmentCode != null ? household.apartmentCode.toLowerCase() : ''}"
+                                        th:data-household-code="${household.householdCode != null ? household.householdCode.toLowerCase() : ''}"
+                                        th:data-resident-id="${household.id > 0 ? household.id : household.householdId}"
+                                        th:data-household-id="${household.householdId}"
+                                        style="cursor: pointer;"
+                                        th:onclick="'selectHousehold(' + ${household.id > 0 ? household.id : household.householdId} + ', ' + ${household.householdId} + ')'">
+                                        <td style="text-align: center;">
+                                            <input type="radio" name="selectedHousehold" 
+                                                   th:value="${household.id > 0 ? household.id : household.householdId}"
+                                                   th:id="'household_' + ${household.id > 0 ? household.id : household.householdId}"
+                                                   style="cursor: pointer;">
+                                        </td>
+                                        <td th:text="${household.fullName}" style="font-weight: bold;"></td>
+                                        <td th:text="${household.apartmentCode != null ? household.apartmentCode : '-'}"></td>
+                                        <td th:text="${household.householdCode != null ? household.householdCode : '-'}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div id="noHouseholdResults" style="display: none; padding: 20px; text-align: center; color: #999;">
+                                Không tìm thấy hộ dân nào phù hợp
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Tháng/Năm -->
@@ -428,10 +485,23 @@
             radios.forEach(radio => radio.checked = false);
             document.getElementById('selectedFeeTypeId').value = '';
             document.getElementById('selectAllHouseholds').checked = false;
-            document.getElementById('householdSelect').disabled = false;
-            document.getElementById('householdSelect').value = '';
+            
+            // Reset household selection
+            const householdRadios = document.querySelectorAll('input[name="selectedHousehold"]');
+            householdRadios.forEach(radio => {
+                radio.checked = false;
+                radio.disabled = false;
+            });
             document.getElementById('selectedResidentId').value = '';
             document.getElementById('selectedHouseholdId').value = '';
+            
+            // Reset search inputs
+            clearHouseholdSearch();
+            
+            // Enable search inputs
+            document.getElementById('searchOwnerName').disabled = false;
+            document.getElementById('searchApartmentCode').disabled = false;
+            document.getElementById('searchHouseholdCode').disabled = false;
         }
         
         function closeAddFeeModal() {
@@ -446,14 +516,86 @@
         
         function toggleHouseholdSelect() {
             const selectAll = document.getElementById('selectAllHouseholds');
-            const householdSelect = document.getElementById('householdSelect');
+            const householdTable = document.getElementById('householdTableBody');
             if (selectAll.checked) {
-                householdSelect.disabled = true;
-                householdSelect.value = '';
+                // Disable selection in table
+                const radios = document.querySelectorAll('input[name="selectedHousehold"]');
+                radios.forEach(radio => {
+                    radio.disabled = true;
+                    radio.checked = false;
+                });
+                document.getElementById('selectedResidentId').value = '';
                 document.getElementById('selectedHouseholdId').value = '';
+                // Disable search inputs
+                document.getElementById('searchOwnerName').disabled = true;
+                document.getElementById('searchApartmentCode').disabled = true;
+                document.getElementById('searchHouseholdCode').disabled = true;
             } else {
-                householdSelect.disabled = false;
+                // Enable selection in table
+                const radios = document.querySelectorAll('input[name="selectedHousehold"]');
+                radios.forEach(radio => radio.disabled = false);
+                // Enable search inputs
+                document.getElementById('searchOwnerName').disabled = false;
+                document.getElementById('searchApartmentCode').disabled = false;
+                document.getElementById('searchHouseholdCode').disabled = false;
             }
+        }
+        
+        function filterHouseholds() {
+            const ownerName = document.getElementById('searchOwnerName').value.toLowerCase().trim();
+            const apartmentCode = document.getElementById('searchApartmentCode').value.toLowerCase().trim();
+            const householdCode = document.getElementById('searchHouseholdCode').value.toLowerCase().trim();
+            
+            const rows = document.querySelectorAll('.household-row');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const rowOwnerName = row.getAttribute('data-owner-name') || '';
+                const rowApartmentCode = row.getAttribute('data-apartment-code') || '';
+                const rowHouseholdCode = row.getAttribute('data-household-code') || '';
+                
+                const matchesOwnerName = ownerName === '' || rowOwnerName.includes(ownerName);
+                const matchesApartmentCode = apartmentCode === '' || rowApartmentCode.includes(apartmentCode);
+                const matchesHouseholdCode = householdCode === '' || rowHouseholdCode.includes(householdCode);
+                
+                if (matchesOwnerName && matchesApartmentCode && matchesHouseholdCode) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show/hide "no results" message
+            const noResults = document.getElementById('noHouseholdResults');
+            if (visibleCount === 0 && (ownerName !== '' || apartmentCode !== '' || householdCode !== '')) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+        }
+        
+        function clearHouseholdSearch() {
+            document.getElementById('searchOwnerName').value = '';
+            document.getElementById('searchApartmentCode').value = '';
+            document.getElementById('searchHouseholdCode').value = '';
+            filterHouseholds();
+        }
+        
+        function selectHousehold(residentId, householdId) {
+            // Uncheck select all checkbox
+            document.getElementById('selectAllHouseholds').checked = false;
+            toggleHouseholdSelect();
+            
+            // Check the radio button for this household
+            const radio = document.getElementById('household_' + residentId);
+            if (radio) {
+                radio.checked = true;
+            }
+            
+            // Set hidden inputs
+            document.getElementById('selectedResidentId').value = residentId;
+            document.getElementById('selectedHouseholdId').value = householdId;
         }
         
         // Handle radio button selection
@@ -480,52 +622,56 @@
                     
                     // Check if select all or specific household
                     const selectAll = document.getElementById('selectAllHouseholds').checked;
-                    const householdId = document.getElementById('householdSelect').value;
+                    const selectedHouseholdRadio = document.querySelector('input[name="selectedHousehold"]:checked');
+                    const residentIdInput = document.getElementById('selectedResidentId');
+                    const householdIdInput = document.getElementById('selectedHouseholdId');
+                    const residentId = residentIdInput.value.trim();
+                    const householdId = householdIdInput.value.trim();
                     
-                    if (!selectAll && !householdId) {
-                        e.preventDefault();
-                        alert('Vui lòng chọn "Thu phí cho tất cả các hộ dân" hoặc chọn một hộ dân cụ thể');
-                        return false;
-                    }
+                    console.log('DEBUG: Form submit - selectAll:', selectAll);
+                    console.log('DEBUG: Form submit - selectedHouseholdRadio:', selectedHouseholdRadio);
+                    console.log('DEBUG: Form submit - residentId:', residentId);
+                    console.log('DEBUG: Form submit - householdId:', householdId);
                     
-                    // Set residentId and householdId to null if select all
                     if (selectAll) {
-                        document.getElementById('selectedResidentId').value = '';
-                        document.getElementById('selectedHouseholdId').value = '';
+                        // Thu phí cho tất cả - remove inputs from form
+                        console.log('DEBUG: Thu phí cho TẤT CẢ các hộ dân');
+                        residentIdInput.value = '';
+                        householdIdInput.value = '';
+                        residentIdInput.removeAttribute('name');
+                        householdIdInput.removeAttribute('name');
                     } else {
-                        const selectedOption = householdSelect.options[householdSelect.selectedIndex];
-                        const residentId = selectedOption.value;
-                        const householdId = selectedOption.getAttribute('data-household-id');
-                        document.getElementById('selectedResidentId').value = residentId;
-                        document.getElementById('selectedHouseholdId').value = householdId || '';
+                        // Thu phí cho một hộ cụ thể - validate và ensure inputs have name
+                        if (!selectedHouseholdRadio || !residentId || !householdId) {
+                            e.preventDefault();
+                            alert('Vui lòng chọn "Thu phí cho tất cả các hộ dân" hoặc chọn một hộ dân cụ thể');
+                            return false;
+                        }
+                        console.log('DEBUG: Thu phí cho một hộ cụ thể - residentId:', residentId, ', householdId:', householdId);
+                        // Ensure inputs have name attribute
+                        residentIdInput.setAttribute('name', 'residentId');
+                        householdIdInput.setAttribute('name', 'householdId');
                     }
                 });
             }
             
-            // Handle household select change
-            const householdSelect = document.getElementById('householdSelect');
-            if (householdSelect) {
-                householdSelect.addEventListener('change', function() {
-                    if (this.value) {
+            // Handle household radio button selection
+            const householdRadios = document.querySelectorAll('input[name="selectedHousehold"]');
+            householdRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
                         document.getElementById('selectAllHouseholds').checked = false;
-                        const selectedOption = this.options[this.selectedIndex];
-                        const residentId = selectedOption.value;
-                        const householdId = selectedOption.getAttribute('data-household-id');
+                        toggleHouseholdSelect();
+                        const row = this.closest('tr');
+                        const residentId = row.getAttribute('data-resident-id');
+                        const householdId = row.getAttribute('data-household-id');
                         document.getElementById('selectedResidentId').value = residentId;
                         document.getElementById('selectedHouseholdId').value = householdId || '';
                     }
                 });
-            }
+            });
         });
         
-        function toggleHouseholdSelect() {
-            const selectAll = document.getElementById('selectAll');
-            const householdSelect = document.getElementById('householdSelect');
-            householdSelect.disabled = selectAll.checked;
-            if (selectAll.checked) {
-                householdSelect.value = '';
-            }
-        }
         
         function markAsPaid(feeId) {
             document.getElementById('feeIdInput').value = feeId;
