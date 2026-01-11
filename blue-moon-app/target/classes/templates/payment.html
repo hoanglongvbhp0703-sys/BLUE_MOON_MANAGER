@@ -5,6 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đóng tiền - Blue Moon</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .fee-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s;
+        }
+        .fee-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .fee-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .fee-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .fee-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-unpaid {
+            background: #fee;
+            color: #c33;
+        }
+        .status-partial {
+            background: #ffe;
+            color: #c93;
+        }
+        .status-overpaid {
+            background: #efe;
+            color: #3c3;
+        }
+        .fee-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .fee-detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .fee-detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .fee-detail-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .amount-highlight {
+            color: #667eea;
+            font-size: 20px;
+        }
+        .payment-form {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .btn-pay {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn-pay:hover {
+            background: #5568d3;
+        }
+        .total-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .total-summary h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .total-summary .amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -19,23 +149,145 @@
     </nav>
     
     <div class="dashboard-container">
-        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); max-width: 900px; margin: 0 auto;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); max-width: 1000px; margin: 0 auto;">
             <h2 style="margin-bottom: 30px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Đóng tiền</h2>
             
-            <div style="text-align: center; padding: 60px 20px;">
-                <div style="font-size: 64px; margin-bottom: 20px;">💰</div>
-                <h3 style="color: #667eea; margin-bottom: 15px;">Chức năng đang được phát triển</h3>
-                <p style="color: #666; margin-bottom: 30px;">Chức năng đóng tiền sẽ sớm được cập nhật. Vui lòng quay lại sau.</p>
-                <a th:href="@{/main}" class="btn btn-primary" style="padding: 12px 30px;">Quay lại trang chủ</a>
+            <!-- Thông báo lỗi/thành công -->
+            <div th:if="${error}" style="margin-bottom: 20px; padding: 15px; background: #fee; border: 1px solid #fcc; border-radius: 5px; color: #c33;">
+                <span th:text="${error}"></span>
+            </div>
+            <div th:if="${success}" style="margin-bottom: 20px; padding: 15px; background: #efe; border: 1px solid #cfc; border-radius: 5px; color: #3c3;">
+                <span th:text="${success}"></span>
             </div>
             
-            <!-- Placeholder for future payment form -->
-            <div style="margin-top: 40px; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 2px dashed #ddd;">
-                <h4 style="color: #667eea; margin-bottom: 15px;">Thông tin thanh toán</h4>
-                <p style="color: #999; font-style: italic;">Form thanh toán sẽ được hiển thị tại đây...</p>
+            <!-- Thông báo cho Admin -->
+            <div th:if="${isAdmin}" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; text-align: center; color: white;">
+                <div style="font-size: 64px; margin-bottom: 20px;">👑</div>
+                <h3 style="margin: 0 0 15px 0; font-size: 24px; color: white;">Quản trị viên không cần phải đóng tiền</h3>
+                <p style="margin: 0; font-size: 16px; opacity: 0.95;" th:text="${message}">Quản trị viên không cần phải đóng tiền.</p>
+            </div>
+            
+            <!-- Tổng số tiền cần đóng -->
+            <div th:if="${hasFees != null and hasFees}" th:unless="${isAdmin}" class="total-summary">
+                <h3>Tổng số tiền cần đóng</h3>
+                <div class="amount" th:text="${#numbers.formatDecimal(totalRemaining, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</div>
+                <p style="margin: 0; font-size: 14px; opacity: 0.9;">Vui lòng thanh toán các khoản phí bên dưới</p>
+            </div>
+            
+            <!-- Danh sách phí chưa thanh toán -->
+            <div th:if="${hasFees != null and hasFees}" th:unless="${isAdmin}">
+                <h3 style="margin-bottom: 20px; color: #333;">Danh sách phí cần đóng</h3>
+                
+                <div th:each="fee : ${unpaidFees}" class="fee-card">
+                    <div class="fee-header">
+                        <div class="fee-title" th:text="'Phí ' + ${fee.monthYearDisplay} + ' - ' + ${fee.apartmentCode}">Phí</div>
+                        <span class="fee-status" 
+                              th:classappend="${fee.status == 'unpaid'} ? 'status-unpaid' : (${fee.status == 'partial_paid'} ? 'status-partial' : 'status-overpaid')"
+                              th:text="${fee.statusDisplay}">Chưa thu phí</span>
+                    </div>
+                    
+                    <div class="fee-details">
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Mã căn hộ</span>
+                            <span class="fee-detail-value" th:text="${fee.apartmentCode}">-</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Mã hộ</span>
+                            <span class="fee-detail-value" th:text="${fee.householdCode}">-</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Chủ hộ</span>
+                            <span class="fee-detail-value" th:text="${fee.ownerName}">-</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Loại phí</span>
+                            <span class="fee-detail-value" th:text="${fee.feeTypeDisplay}">-</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Tổng số tiền</span>
+                            <span class="fee-detail-value amount-highlight" th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Đã đóng</span>
+                            <span class="fee-detail-value" th:text="${#numbers.formatDecimal(fee.paidAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</span>
+                        </div>
+                        <div class="fee-detail-item">
+                            <span class="fee-detail-label">Còn lại</span>
+                            <span class="fee-detail-value amount-highlight" th:text="${#numbers.formatDecimal(fee.remainingAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</span>
+                        </div>
+                        <div class="fee-detail-item" th:if="${fee.paymentDeadline != null}">
+                            <span class="fee-detail-label">Hạn thanh toán</span>
+                            <span class="fee-detail-value" th:text="${#temporals.format(fee.paymentDeadline, 'dd/MM/yyyy')}">-</span>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${fee.reason != null && !fee.reason.isEmpty()}" style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                        <strong style="color: #667eea;">Lý do:</strong>
+                        <span th:text="${fee.reason}"></span>
+                    </div>
+                    
+                    <!-- Form đóng phí -->
+                    <div class="payment-form">
+                        <form th:action="@{/payment/pay}" method="post" onsubmit="return validatePayment(this)">
+                            <input type="hidden" name="feeId" th:value="${fee.id}">
+                            
+                            <div class="form-group">
+                                <label>Số tiền đóng <span style="color: red;">*</span></label>
+                                <input type="number" 
+                                       name="paymentAmount" 
+                                       th:value="${fee.remainingAmount > 0 ? fee.remainingAmount.intValue() : 0}"
+                                       th:attr="data-remaining=${fee.remainingAmount.intValue()}"
+                                       min="0"
+                                       step="1000"
+                                       required
+                                       placeholder="Nhập số tiền">
+                                <small style="color: #666; font-size: 12px;">Số tiền còn lại: <span th:text="${#numbers.formatDecimal(fee.remainingAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"></span></small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Phương thức thanh toán <span style="color: red;">*</span></label>
+                                <select name="paymentMethod" required>
+                                    <option value="Tiền mặt">Tiền mặt</option>
+                                    <option value="Chuyển khoản">Chuyển khoản</option>
+                                    <option value="Thẻ tín dụng">Thẻ tín dụng</option>
+                                </select>
+                            </div>
+                            
+                            <div style="text-align: right;">
+                                <button type="submit" class="btn-pay">Đóng phí</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trạng thái không có phí -->
+            <div th:if="${hasFees != null and !hasFees}" th:unless="${isAdmin}" class="empty-state">
+                <div class="empty-state-icon">✅</div>
+                <h3 style="color: #667eea; margin-bottom: 10px;">Không có phí cần đóng</h3>
+                <p>Bạn đã thanh toán đầy đủ tất cả các khoản phí.</p>
             </div>
         </div>
     </div>
+    
+    <script>
+        function validatePayment(form) {
+            const paymentAmount = parseFloat(form.paymentAmount.value);
+            const remainingAmount = parseFloat(form.paymentAmount.getAttribute('data-remaining') || form.paymentAmount.value);
+            
+            if (paymentAmount <= 0) {
+                alert('Số tiền phải lớn hơn 0');
+                return false;
+            }
+            
+            if (paymentAmount > remainingAmount * 1.1) {
+                if (!confirm('Số tiền bạn nhập lớn hơn số tiền còn lại. Bạn có chắc chắn muốn nộp dư?')) {
+                    return false;
+                }
+            }
+            
+            return confirm('Bạn có chắc chắn muốn đóng phí này?');
+        }
+    </script>
 </body>
 </html>
-

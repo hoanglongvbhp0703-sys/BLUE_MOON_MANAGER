@@ -19,3 +19,6 @@ ADD COLUMN IF NOT EXISTS temporary_reason TEXT;
 
 
 
+
+
+

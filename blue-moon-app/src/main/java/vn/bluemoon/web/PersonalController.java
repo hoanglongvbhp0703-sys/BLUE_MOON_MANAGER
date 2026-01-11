@@ -9,6 +9,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import vn.bluemoon.exception.DbException;
 import vn.bluemoon.model.entity.Resident;
 import vn.bluemoon.model.entity.User;
+import vn.bluemoon.security.Authorization;
 import vn.bluemoon.service.PersonalInfoService;
 import vn.bluemoon.validation.ValidationException;
 
@@ -30,14 +31,37 @@ public class PersonalController {
             return "redirect:/login";
         }
         
+        model.addAttribute("user", user);
+        
+        // Khởi tạo các biến mặc định
+        boolean isAdmin = false;
+        model.addAttribute("isAdmin", false);
+        model.addAttribute("hasResident", false);
+        model.addAttribute("resident", null);
+        
+        // Kiểm tra nếu user là admin
+        try {
+            isAdmin = Authorization.isAdmin(user);
+            if (isAdmin) {
+                model.addAttribute("isAdmin", true);
+                model.addAttribute("hasResident", false);
+                model.addAttribute("resident", null);
+                model.addAttribute("message", "Quản trị viên không cần phải đăng ký thông tin cá nhân. Vui lòng sử dụng chức năng 'Quản lý nhân khẩu' để quản lý thông tin.");
+                return "personal-info";
+            }
+        } catch (DbException e) {
+            // Nếu có lỗi khi kiểm tra admin, vẫn tiếp tục xử lý bình thường
+            isAdmin = false;
+        }
+        
+        model.addAttribute("isAdmin", false);
+        
         try {
             // Kiểm tra xem user đã có resident record chưa
             Resident resident = personalInfoService.getPersonalInfo(user.getId());
-            model.addAttribute("user", user);
             model.addAttribute("resident", resident);
             model.addAttribute("hasResident", resident != null);
         } catch (DbException e) {
-            model.addAttribute("user", user);
             model.addAttribute("resident", null);
             model.addAttribute("hasResident", false);
             model.addAttribute("error", "Lỗi khi tải thông tin: " + e.getMessage());
@@ -65,6 +89,16 @@ public class PersonalController {
             return "redirect:/login";
         }
         
+        // Kiểm tra nếu user là admin thì không cho phép đăng ký
+        try {
+            if (Authorization.isAdmin(user)) {
+                redirectAttributes.addFlashAttribute("error", "Quản trị viên không cần phải đăng ký thông tin cá nhân.");
+                return "redirect:/personal-info";
+            }
+        } catch (DbException e) {
+            // Nếu có lỗi khi kiểm tra admin, vẫn tiếp tục xử lý bình thường
+        }
+        
         try {
             vn.bluemoon.model.dto.PersonalInfoRequest request = new vn.bluemoon.model.dto.PersonalInfoRequest();
             request.setFullName(fullName);
@@ -82,8 +116,17 @@ public class PersonalController {
             request.setHouseholdCode(householdCode);
             request.setStatus("active");
             
+            // Kiểm tra xem đã có resident record chưa để hiển thị thông báo phù hợp
+            Resident existingResident = personalInfoService.getPersonalInfo(user.getId());
+            boolean isUpdate = existingResident != null;
+            
             personalInfoService.registerOrUpdatePersonalInfo(user.getId(), request);
-            redirectAttributes.addFlashAttribute("success", "Đăng ký thông tin cá nhân thành công!");
+            
+            if (isUpdate) {
+                redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin cá nhân thành công!");
+            } else {
+                redirectAttributes.addFlashAttribute("success", "Đăng ký thông tin cá nhân thành công!");
+            }
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (DbException e) {

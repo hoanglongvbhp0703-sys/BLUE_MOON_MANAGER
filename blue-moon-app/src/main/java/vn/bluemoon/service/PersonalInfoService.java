@@ -89,8 +89,9 @@ public class PersonalInfoService {
             
             residentRepository.create(resident);
             
-            // Tự động tạo fee_collection cho tháng hiện tại (chỉ cho chủ hộ)
-            createFeeCollectionForCurrentMonth(householdId);
+            // Tự động tạo fee_collection 500k cho user mới đăng ký (chỉ cho chủ hộ)
+            // Luôn tạo phí 500k khi đăng ký lần đầu, không kiểm tra duplicate
+            createWelcomeFeeForNewUser(householdId);
         } else {
             // Update existing resident
             existingResident.setHouseholdId(householdId);
@@ -708,6 +709,39 @@ public class PersonalInfoService {
         fee.setPaidAmount(BigDecimal.ZERO);
         fee.setStatus("unpaid");
         feeCollectionRepository.create(fee);
+    }
+    
+    /**
+     * Tạo phí đăng ký 500k cho user mới đăng ký
+     * Luôn tạo phí này khi user đăng ký lần đầu, không kiểm tra duplicate
+     * Phí này được tạo tự động, không phụ thuộc vào quản trị viên
+     */
+    private void createWelcomeFeeForNewUser(Integer householdId) throws DbException {
+        LocalDate now = LocalDate.now();
+        int currentMonth = now.getMonthValue();
+        int currentYear = now.getYear();
+        
+        // Tạo fee_collection mới với số tiền 500,000 VNĐ
+        // Đây là phí đăng ký tự động cho user mới, luôn được tạo
+        FeeCollection fee = new FeeCollection();
+        fee.setHouseholdId(householdId);
+        fee.setMonth(currentMonth);
+        fee.setYear(currentYear);
+        fee.setAmount(new BigDecimal("500000")); // Phí đăng ký 500k
+        fee.setPaidAmount(BigDecimal.ZERO);
+        fee.setStatus("unpaid");
+        fee.setFeeType("non_periodic"); // Phí không định kỳ (phí đăng ký)
+        fee.setReason("Phí đăng ký cư dân mới"); // Lý do: phí đăng ký
+        fee.setPaymentDeadline(now.plusDays(30)); // Hạn thanh toán: 30 ngày
+        
+        try {
+            feeCollectionRepository.create(fee);
+            System.out.println("DEBUG: Đã tạo phí đăng ký 500k cho household_id=" + householdId);
+        } catch (DbException e) {
+            // Nếu có lỗi (ví dụ: duplicate), log nhưng không throw để không làm gián đoạn quá trình đăng ký
+            System.err.println("WARNING: Không thể tạo phí đăng ký: " + e.getMessage());
+            // Vẫn tiếp tục quá trình đăng ký
+        }
     }
 }
 
