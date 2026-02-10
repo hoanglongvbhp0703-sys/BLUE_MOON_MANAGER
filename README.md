@@ -1,3 +1,20 @@
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=rect&color=0:0f172a,100:1e293b&height=130&section=header&text=Blue%20Moon%20Apartment%20Management&fontSize=36&fontColor=38bdf8&animation=fadeIn" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Web%20Application-0ea5e9?logo=googlechrome&logoColor=white" />
+  <img src="https://img.shields.io/badge/Backend-Spring%20Boot-16a34a?logo=springboot&logoColor=white" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL%20%7C%20MySQL-2563eb?logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Architecture-3--Layer%20MVC-f59e0b?logo=java&logoColor=white" />
+</p>
+
+<p align="center">
+  <b>Enterprise-style apartment management system · Secure · Role-based</b>
+</p>
+
+---
+
 # Blue Moon Apartment Management System
 
 Phần mềm quản lý nhân khẩu và thu phí chung cư Blue Moon - Web Application
