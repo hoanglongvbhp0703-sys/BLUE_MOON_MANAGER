@@ -270,7 +270,7 @@ Sau khi chạy seed data:
 
 ---
 
-## Phân quyền người dùng
+
 
 ### Các nhóm người dùng
 
